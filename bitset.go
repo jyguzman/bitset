@@ -1,7 +1,6 @@
 package bitset
 
 import (
-	"bytes"
 	"fmt"
 	"math"
 	"math/bits"
@@ -33,7 +32,9 @@ func (bitset *Bitset) Set(n int) error {
 	if n >= bitset.size {
 		return fmt.Errorf("bit index %d out of range of bitset", n)
 	}
-	bitset.bits[n/64] |= 1 << n % 64
+	idx := len(bitset.bits) - 1 - n/64
+	fmt.Println("idx:", idx, "bit:", n%64)
+	bitset.bits[idx] |= 1 << (n % 64)
 	return nil
 }
 
@@ -45,7 +46,8 @@ func (bitset *Bitset) Clear(n int) error {
 	if n >= bitset.size {
 		return fmt.Errorf("bit index %d out of range of bitset", n)
 	}
-	bitset.bits[n/64] &= ^(1 << n % 64)
+	idx := len(bitset.bits) - 1 - n/64
+	bitset.bits[idx] &= ^(1 << (n % 64))
 	return nil
 }
 
@@ -57,7 +59,8 @@ func (bitset *Bitset) Flip(n int) error {
 	if n >= bitset.size {
 		return fmt.Errorf("bit index %d out of range of bitset", n)
 	}
-	bitset.bits[n/64] ^= 1 << n % 64
+	idx := len(bitset.bits) - 1 - n/64
+	bitset.bits[idx] ^= 1 << (n % 64)
 	return nil
 }
 
@@ -69,7 +72,8 @@ func (bitset *Bitset) Test(n int) (bool, error) {
 	if n >= bitset.size {
 		return false, fmt.Errorf("bit index %d out of range of bitset", n)
 	}
-	return bitset.bits[n/64]&(1<<(n%64)) >= 1, nil
+	idx := len(bitset.bits) - 1 - n/64
+	return bitset.bits[idx]&(1<<(n%64)) >= 1, nil
 }
 
 func (bitset *Bitset) Not() {
@@ -82,15 +86,16 @@ func (bitset *Bitset) Not() {
 func (bitset *Bitset) Count() int {
 	sum := 0
 	for _, word := range bitset.bits {
+		fmt.Println(word)
 		sum += bits.OnesCount64(word)
 	}
 	return sum
 }
 
-func (bitset *Bitset) String() string {
-	buffer := bytes.NewBufferString("")
-	for _, word := range bitset.bits {
-		buffer.WriteString(fmt.Sprintf("%b", word))
-	}
-	return buffer.String()
-}
+//func (bitset *Bitset) String() string {
+//	buffer := bytes.NewBufferString("")
+//	for _, word := range bitset.bits {
+//		buffer.WriteString(fmt.Sprintf("%b", word))
+//	}
+//	return buffer.String()
+//}
