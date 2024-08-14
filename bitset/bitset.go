@@ -1,0 +1,77 @@
+package bitset
+
+import (
+	"fmt"
+	"math"
+)
+
+type Bitset struct {
+	size int
+	bits []uint64
+}
+
+func NewBitset(numBits int) *Bitset {
+	numWords := int(math.Ceil(float64(numBits) / 64.0))
+	return &Bitset{
+		size: numBits,
+		bits: make([]uint64, numWords),
+	}
+}
+
+// Size returns the number of bits of the bitset
+func (bitset *Bitset) Size() int {
+	return bitset.size
+}
+
+// Set sets the Nth bit. Errors if n < 0 or n >= bitset.size
+func (bitset *Bitset) Set(n int) error {
+	if n < 0 {
+		return fmt.Errorf("set: n must be >= 0")
+	}
+	if n >= bitset.size {
+		return fmt.Errorf("bit index %d out of range of bitset", n)
+	}
+	bitset.bits[n/64] |= 1 << n % 64
+	return nil
+}
+
+// Clear zeroes the Nth bit. Errors if n < 0 or n >= bitset.size
+func (bitset *Bitset) Clear(n int) error {
+	if n < 0 {
+		return fmt.Errorf("clear: n must be >= 0")
+	}
+	if n >= bitset.size {
+		return fmt.Errorf("bit index %d out of range of bitset", n)
+	}
+	bitset.bits[n/64] &= ^(1 << n % 64)
+	return nil
+}
+
+// Flip flips the Nth bit, i.e. 0 -> 1 or 1 -> 0. Errors if n < 0 or n >= bitset.size
+func (bitset *Bitset) Flip(n int) error {
+	if n < 0 {
+		return fmt.Errorf("clear: n must be >= 0")
+	}
+	if n >= bitset.size {
+		return fmt.Errorf("bit index %d out of range of bitset", n)
+	}
+	bitset.bits[n/64] ^= 1 << n % 64
+	return nil
+}
+
+// Test checks if the Nth bit is set. Errors if n < 0 or n >= bitset.size
+func (bitset *Bitset) Test(n int) (bool, error) {
+	if n < 0 {
+		return false, fmt.Errorf("test: n must be >= 0")
+	}
+	if n >= bitset.size {
+		return false, fmt.Errorf("bit index %d out of range of bitset", n)
+	}
+	return bitset.bits[n/64]&(1<<(n%64)) >= 1, nil
+}
+
+func (bitset *Bitset) Not() {
+	for i := range bitset.bits {
+		bitset.bits[i] ^= bitset.bits[i]
+	}
+}
