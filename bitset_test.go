@@ -66,4 +66,6 @@ func TestBitset_String(t *testing.T) {
 	fmt.Println(err)
 }
 
-func TestBitset_Count(t *testing.T) {}
+func TestBitset_Count(t *testing.T) {
+
+}
