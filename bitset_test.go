@@ -1,6 +1,7 @@
 package bitset
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -54,3 +55,13 @@ func TestBitset_Clear(t *testing.T) {}
 func TestBitset_Flip(t *testing.T) {}
 
 func TestBitset_Not(t *testing.T) {}
+
+func TestBitset_String(t *testing.T) {
+	bs := NewBitset(10)
+	var err error
+	err = bs.Set(5)
+	err = bs.Set(3)
+	err = bs.Set(1)
+	fmt.Println(bs.String())
+	fmt.Println(err)
+}

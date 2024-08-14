@@ -1,8 +1,10 @@
 package bitset
 
 import (
+	"bytes"
 	"fmt"
 	"math"
+	"math/bits"
 )
 
 type Bitset struct {
@@ -74,4 +76,21 @@ func (bitset *Bitset) Not() {
 	for i := range bitset.bits {
 		bitset.bits[i] ^= bitset.bits[i]
 	}
+}
+
+// Count returns the number of set bits
+func (bitset *Bitset) Count() int {
+	sum := 0
+	for _, word := range bitset.bits {
+		sum += bits.OnesCount64(word)
+	}
+	return sum
+}
+
+func (bitset *Bitset) String() string {
+	buffer := bytes.NewBufferString("")
+	for _, word := range bitset.bits {
+		buffer.WriteString(fmt.Sprintf("%b", word))
+	}
+	return buffer.String()
 }
