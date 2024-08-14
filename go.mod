@@ -1,3 +1,3 @@
-module github.com/jyguzman/go-bitset
+module github.com/jyguzman/bitset
 
 go 1.22
