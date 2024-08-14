@@ -50,3 +50,7 @@ func TestBitset_Test(t *testing.T) {
 }
 
 func TestBitset_Clear(t *testing.T) {}
+
+func TestBitset_Flip(t *testing.T) {}
+
+func TestBitset_Not(t *testing.T) {}
