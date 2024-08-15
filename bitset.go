@@ -7,41 +7,38 @@ import (
 	"math/bits"
 )
 
-type Bitset struct {
+type BitSet struct {
 	size int
 	bits []uint64
 }
 
-func NewBitset(numBits int) *Bitset {
+func NewBitSet(numBits int) *BitSet {
 	numWords := int(math.Ceil(float64(numBits) / 64.0))
-	return &Bitset{
+	return &BitSet{
 		size: numBits,
 		bits: make([]uint64, numWords),
 	}
 }
 
 // Size returns the number of bits of the bitset
-func (bitset *Bitset) Size() int {
+func (bitset *BitSet) Size() int {
 	return bitset.size
 }
 
 // Set sets the Nth bit. Errors if n < 0 or n >= bitset.size
-func (bitset *Bitset) Set(n int) error {
-	if n < 0 {
-		return fmt.Errorf("set: n must be >= 0")
-	}
-	if n >= bitset.size {
-		return fmt.Errorf("bit index %d out of range of bitset", n)
+func (bitset *BitSet) Set(n int) error {
+	if err := bitset.checkValidBit(n); err != nil {
+		return err
 	}
 	idx := len(bitset.bits) - 1 - n/64
 	bitset.bits[idx] |= 1 << (n % 64)
 	return nil
 }
 
-// SetAll sets multiple bits.
-func (bitset *Bitset) SetAll(bitPositions ...int) error {
-	for _, bit := range bitPositions {
-		if err := bitset.Set(bit); err != nil {
+// SetBits sets multiple bits.
+func (bitset *BitSet) SetBits(positions []int) error {
+	for _, pos := range positions {
+		if err := bitset.Set(pos); err != nil {
 			return err
 		}
 	}
@@ -49,71 +46,66 @@ func (bitset *Bitset) SetAll(bitPositions ...int) error {
 }
 
 // Clear zeroes the Nth bit. Errors if n < 0 or n >= bitset.size
-func (bitset *Bitset) Clear(n int) error {
-	if n < 0 {
-		return fmt.Errorf("clear: n must be >= 0")
-	}
-	if n >= bitset.size {
-		return fmt.Errorf("bit index %d out of range of bitset", n)
+func (bitset *BitSet) Clear(n int) error {
+	if err := bitset.checkValidBit(n); err != nil {
+		return err
 	}
 	idx := len(bitset.bits) - 1 - n/64
 	bitset.bits[idx] &= ^(1 << (n % 64))
 	return nil
 }
 
-// ClearAll clears multiple bits.
-func (bitset *Bitset) ClearAll(bitPositions ...int) error {
-	for _, bit := range bitPositions {
-		if err := bitset.Clear(bit); err != nil {
+// ClearBits clears the bits at the given positions.
+func (bitset *BitSet) ClearBits(positions []int) error {
+	for _, pos := range positions {
+		if err := bitset.Clear(pos); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+// ClearAll clears all bits.
+func (bitset *BitSet) ClearAll() {
+	bitset.bits = make([]uint64, int(math.Ceil(float64(bitset.size)/64.0)))
+}
+
 // Flip flips the Nth bit, i.e. 0 -> 1 or 1 -> 0. Errors if n < 0 or n >= bitset.size
-func (bitset *Bitset) Flip(n int) error {
-	if n < 0 {
-		return fmt.Errorf("clear: n must be >= 0")
-	}
-	if n >= bitset.size {
-		return fmt.Errorf("bit index %d out of range of bitset", n)
+func (bitset *BitSet) Flip(n int) error {
+	if err := bitset.checkValidBit(n); err != nil {
+		return err
 	}
 	idx := len(bitset.bits) - 1 - n/64
 	bitset.bits[idx] ^= 1 << (n % 64)
 	return nil
 }
 
-// FlipAll flips multiple bits.
-func (bitset *Bitset) FlipAll(bitPositions ...int) error {
-	for _, bit := range bitPositions {
-		if err := bitset.Flip(bit); err != nil {
+// FlipBits flips multiple bits.
+func (bitset *BitSet) FlipBits(positions []int) error {
+	for _, pos := range positions {
+		if err := bitset.Flip(pos); err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
 // Test checks if the Nth bit is set. Errors if n < 0 or n >= bitset.size
-func (bitset *Bitset) Test(n int) (bool, error) {
-	if n < 0 {
-		return false, fmt.Errorf("test: n must be >= 0")
-	}
-	if n >= bitset.size {
-		return false, fmt.Errorf("bit index %d out of range of bitset", n)
+func (bitset *BitSet) Test(n int) (bool, error) {
+	if err := bitset.checkValidBit(n); err != nil {
+		return false, err
 	}
 	idx := len(bitset.bits) - 1 - n/64
 	return bitset.bits[idx]&(1<<(n%64)) >= 1, nil
 }
 
-// TestAll tests if multiple bit and returns a slice of bools that are true/false
+// TestBits tests if multiple bit and returns a slice of bools that are true/false
 // if the corresponding bits are set, and the number of set bits.
-func (bitset *Bitset) TestAll(bitPositions ...int) ([]bool, int, error) {
+func (bitset *BitSet) TestBits(positions []int) ([]bool, int, error) {
 	res := make([]bool, len(bitset.bits))
 	numSet := 0
-	for i, bit := range bitPositions {
-		isSet, err := bitset.Test(bit)
+	for i, pos := range positions {
+		isSet, err := bitset.Test(pos)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -125,14 +117,8 @@ func (bitset *Bitset) TestAll(bitPositions ...int) ([]bool, int, error) {
 	return res, numSet, nil
 }
 
-func (bitset *Bitset) Not() {
-	for i := range bitset.bits {
-		bitset.bits[i] ^= bitset.bits[i]
-	}
-}
-
-// Count returns the number of set bits
-func (bitset *Bitset) Count() int {
+// CountSetBits returns the number of set bits
+func (bitset *BitSet) CountSetBits() int {
 	sum := 0
 	for _, word := range bitset.bits {
 		sum += bits.OnesCount64(word)
@@ -140,10 +126,46 @@ func (bitset *Bitset) Count() int {
 	return sum
 }
 
-func (bitset *Bitset) String() string {
+// Or returns the result of bitset OR (|) other.
+func (bitset *BitSet) Or(other *BitSet) *BitSet {
+	smallerSet, greaterSet := bitset, other
+	if bitset.size > other.size {
+		smallerSet, greaterSet = other, bitset
+	}
+	newBitArray := make([]uint64, int(math.Ceil(float64(greaterSet.size)/64.0)))
+	for i := range smallerSet.bits {
+		newBitArray[i] = smallerSet.bits[i] | greaterSet.bits[i]
+	}
+	return &BitSet{size: greaterSet.size, bits: newBitArray}
+}
+
+// And returns the result of bitset AND (&) other
+func (bitset *BitSet) And(other *BitSet) *BitSet {
+	smallerSet, greaterSet := bitset, other
+	if bitset.size > other.size {
+		smallerSet, greaterSet = other, bitset
+	}
+	newBitArray := make([]uint64, int(math.Ceil(float64(greaterSet.size)/64.0)))
+	for i := range smallerSet.bits {
+		newBitArray[i] = smallerSet.bits[i] & greaterSet.bits[i]
+	}
+	return &BitSet{size: greaterSet.size, bits: newBitArray}
+}
+
+func (bitset *BitSet) String() string {
 	buffer := bytes.NewBufferString("")
 	for _, word := range bitset.bits {
 		buffer.WriteString(fmt.Sprintf("%b", word))
 	}
 	return buffer.String()
+}
+
+func (bitset *BitSet) checkValidBit(n int) error {
+	if n < 0 {
+		return fmt.Errorf("test: n must be >= 0")
+	}
+	if n >= bitset.size {
+		return fmt.Errorf("bit index %d out of range of bitset", n)
+	}
+	return nil
 }

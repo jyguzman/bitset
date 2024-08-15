@@ -7,36 +7,36 @@ import (
 	"testing"
 )
 
-func TestBitset_BitArrayLen(t *testing.T) {
-	bs := NewBitset(4416)
+func TestBitSet_BitArrayLen(t *testing.T) {
+	bs := NewBitSet(4416)
 	want := 69
 	if len(bs.bits) != 69 {
-		t.Errorf("Bitset has length %d, want %d", len(bs.bits), want)
+		t.Errorf("BitSet has length %d, want %d", len(bs.bits), want)
 	}
 
-	bs = NewBitset(420)
+	bs = NewBitSet(420)
 	want = 7
 	if len(bs.bits) != 7 {
-		t.Errorf("Bitset has length %d, want %d", len(bs.bits), want)
+		t.Errorf("BitSet has length %d, want %d", len(bs.bits), want)
 	}
 }
 
-func TestBitset_OutOfBounds(t *testing.T) {
-	bs := NewBitset(4416)
+func TestBitSet_OutOfBounds(t *testing.T) {
+	bs := NewBitSet(4416)
 	err := bs.Set(4416)
 	if err == nil {
-		t.Errorf("Bitset should have returned an error")
+		t.Errorf("BitSet should have returned an error")
 	}
 
 	err = bs.Set(-1)
 	if err == nil {
-		t.Errorf("Bitset should have returned an error")
+		t.Errorf("BitSet should have returned an error")
 	}
 }
 
-func TestBitset_Set(t *testing.T) {
+func TestBitSet_Set(t *testing.T) {
 	numBits := 544
-	bs := NewBitset(numBits)
+	bs := NewBitSet(numBits)
 	for i := len(bs.bits) - 1; i >= 0; i-- {
 		bitPos := i + (i * 64)
 		err := bs.Set(bitPos)
@@ -50,9 +50,9 @@ func TestBitset_Set(t *testing.T) {
 	}
 }
 
-func TestBitset_Test(t *testing.T) {
+func TestBitSet_Test(t *testing.T) {
 	numBits := 544
-	bs := NewBitset(numBits)
+	bs := NewBitSet(numBits)
 	for i := len(bs.bits) - 1; i >= 0; i-- {
 		bitPos := i + (i * 64)
 		if err := bs.Set(bitPos); err != nil {
@@ -64,19 +64,45 @@ func TestBitset_Test(t *testing.T) {
 			t.Error(err)
 		}
 		if !isSet {
-			t.Errorf("Bitset test failed for bit %d", bitPos)
+			t.Errorf("BitSet test failed for bit %d", bitPos)
 		}
 	}
 }
 
-func TestBitset_Clear(t *testing.T) {}
+func TestBitSet_Clear(t *testing.T) {}
 
-func TestBitset_Flip(t *testing.T) {}
+func TestBitSet_Flip(t *testing.T) {}
 
-func TestBitset_Not(t *testing.T) {}
+func TestBitSet_Or(t *testing.T) {
+	a := NewBitSet(20)
+	b := NewBitSet(20)
 
-func TestBitset_String(t *testing.T) {
-	bs := NewBitset(512)
+	aToSet := []int{0, 1, 2, 4}
+	if err := a.SetBits(aToSet); err != nil {
+		t.Error(err)
+	}
+	res := a.Or(b)
+	fmt.Println(res)
+}
+
+func TestBitSet_And(t *testing.T) {
+	a := NewBitSet(20)
+	b := NewBitSet(20)
+
+	aToSet := []int{0, 1, 2, 4}
+	bToSet := []int{0, 1, 2, 4}
+	if err := a.SetBits(aToSet); err != nil {
+		t.Error(err)
+	}
+	if err := b.SetBits(bToSet); err != nil {
+		t.Error(err)
+	}
+	res := a.And(b)
+	fmt.Println(res)
+}
+
+func TestBitSet_String(t *testing.T) {
+	bs := NewBitSet(512)
 	var err error
 	err = bs.Set(132)
 	err = bs.Set(65)
@@ -86,9 +112,9 @@ func TestBitset_String(t *testing.T) {
 	fmt.Println(err)
 }
 
-func TestBitset_Count(t *testing.T) {
+func TestBitSet_Count(t *testing.T) {
 	numBits := 512
-	bs := NewBitset(numBits)
+	bs := NewBitSet(numBits)
 	setBits := make(map[uint64]bool)
 	var bits []int
 	numBitsToSet := rand.Intn(numBits)
@@ -97,25 +123,13 @@ func TestBitset_Count(t *testing.T) {
 		setBits[uint64(bit)] = true
 		bits = append(bits, bit)
 	}
-	if err := bs.SetAll(bits...); err != nil {
+	if err := bs.SetBits(bits); err != nil {
 		t.Error(err)
 	}
-	count := bs.Count()
+	count := bs.CountSetBits()
 	want := len(setBits)
 	if count != want {
-		t.Errorf("Bitset has count %d, want %d", count, want)
+		t.Errorf("BitSet has count %d, want %d", count, want)
 	}
 	fmt.Println(bs.String())
-}
-
-func Test_Do(t *testing.T) {
-	bs := NewBitset(50)
-	bits := []int{
-		1, 5, 10, 15, 20, 30, 40, 49,
-	}
-	if err := bs.SetAll(bits...); err != nil {
-		t.Error(err)
-	}
-	fmt.Println(bs.String())
-	fmt.Println(bs.Count())
 }
