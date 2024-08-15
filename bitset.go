@@ -37,9 +37,9 @@ func (bitset *BitSet) Set(n int) error {
 }
 
 // SetBits sets multiple bits.
-func (bitset *BitSet) SetBits(positions []int) error {
-	for _, pos := range positions {
-		if err := bitset.Set(pos); err != nil {
+func (bitset *BitSet) SetBits(bits []int) error {
+	for _, bit := range bits {
+		if err := bitset.Set(bit); err != nil {
 			return err
 		}
 	}
@@ -57,9 +57,9 @@ func (bitset *BitSet) Clear(n int) error {
 }
 
 // ClearBits clears the bits at the given positions.
-func (bitset *BitSet) ClearBits(positions []int) error {
-	for _, pos := range positions {
-		if err := bitset.Clear(pos); err != nil {
+func (bitset *BitSet) ClearBits(bits []int) error {
+	for _, bit := range bits {
+		if err := bitset.Clear(bit); err != nil {
 			return err
 		}
 	}
@@ -82,9 +82,9 @@ func (bitset *BitSet) Flip(n int) error {
 }
 
 // FlipBits flips multiple bits.
-func (bitset *BitSet) FlipBits(positions []int) error {
-	for _, pos := range positions {
-		if err := bitset.Flip(pos); err != nil {
+func (bitset *BitSet) FlipBits(bits []int) error {
+	for _, bit := range bits {
+		if err := bitset.Flip(bit); err != nil {
 			return err
 		}
 	}
@@ -102,11 +102,11 @@ func (bitset *BitSet) Test(n int) (bool, error) {
 
 // TestBits tests if multiple bit and returns a slice of bools that are true/false
 // if the corresponding bits are set, and the number of set bits.
-func (bitset *BitSet) TestBits(positions []int) ([]bool, int, error) {
+func (bitset *BitSet) TestBits(bits []int) ([]bool, int, error) {
 	res := make([]bool, len(bitset.bitArray))
 	numSet := 0
-	for i, pos := range positions {
-		isSet, err := bitset.Test(pos)
+	for i, bit := range bits {
+		isSet, err := bitset.Test(bit)
 		if err != nil {
 			return nil, 0, err
 		}
