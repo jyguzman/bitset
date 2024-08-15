@@ -3,6 +3,7 @@ package bitset
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"testing"
 )
 
@@ -34,7 +35,7 @@ func TestBitset_OutOfBounds(t *testing.T) {
 }
 
 func TestBitset_Set(t *testing.T) {
-	numBits := 512
+	numBits := 544
 	bs := NewBitset(numBits)
 	for i := len(bs.bits) - 1; i >= 0; i-- {
 		bitPos := i + (i * 64)
@@ -50,7 +51,22 @@ func TestBitset_Set(t *testing.T) {
 }
 
 func TestBitset_Test(t *testing.T) {
-
+	numBits := 544
+	bs := NewBitset(numBits)
+	for i := len(bs.bits) - 1; i >= 0; i-- {
+		bitPos := i + (i * 64)
+		if err := bs.Set(bitPos); err != nil {
+			t.Error(err)
+		}
+		idx := len(bs.bits) - 1 - bitPos/64
+		isSet, err := bs.Test(idx)
+		if err != nil {
+			t.Error(err)
+		}
+		if !isSet {
+			t.Errorf("Bitset test failed for bit %d", bitPos)
+		}
+	}
 }
 
 func TestBitset_Clear(t *testing.T) {}
@@ -71,16 +87,21 @@ func TestBitset_String(t *testing.T) {
 }
 
 func TestBitset_Count(t *testing.T) {
-	bs := NewBitset(50)
-	want := 10
-	var err error
-	for i := 0; i < want; i++ {
-		err = bs.Set(i)
+	numBits := 512
+	bs := NewBitset(numBits)
+	setBits := make(map[uint64]bool)
+	var bits []int
+	numBitsToSet := rand.Intn(numBits)
+	for i := 0; i < numBitsToSet; i++ {
+		bit := rand.Intn(numBits)
+		setBits[uint64(bit)] = true
+		bits = append(bits, bit)
 	}
-	if err != nil {
+	if err := bs.SetAll(bits...); err != nil {
 		t.Error(err)
 	}
 	count := bs.Count()
+	want := len(setBits)
 	if count != want {
 		t.Errorf("Bitset has count %d, want %d", count, want)
 	}

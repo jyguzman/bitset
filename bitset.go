@@ -39,8 +39,8 @@ func (bitset *Bitset) Set(n int) error {
 }
 
 // SetAll sets multiple bits.
-func (bitset *Bitset) SetAll(bits ...int) error {
-	for _, bit := range bits {
+func (bitset *Bitset) SetAll(bitPositions ...int) error {
+	for _, bit := range bitPositions {
 		if err := bitset.Set(bit); err != nil {
 			return err
 		}
@@ -62,8 +62,8 @@ func (bitset *Bitset) Clear(n int) error {
 }
 
 // ClearAll clears multiple bits.
-func (bitset *Bitset) ClearAll(bits ...int) error {
-	for _, bit := range bits {
+func (bitset *Bitset) ClearAll(bitPositions ...int) error {
+	for _, bit := range bitPositions {
 		if err := bitset.Clear(bit); err != nil {
 			return err
 		}
@@ -85,8 +85,8 @@ func (bitset *Bitset) Flip(n int) error {
 }
 
 // FlipAll flips multiple bits.
-func (bitset *Bitset) FlipAll(bits ...int) error {
-	for _, bit := range bits {
+func (bitset *Bitset) FlipAll(bitPositions ...int) error {
+	for _, bit := range bitPositions {
 		if err := bitset.Flip(bit); err != nil {
 			return err
 		}
@@ -109,10 +109,10 @@ func (bitset *Bitset) Test(n int) (bool, error) {
 
 // TestAll tests if multiple bit and returns a slice of bools that are true/false
 // if the corresponding bits are set, and the number of set bits.
-func (bitset *Bitset) TestAll(bits ...int) ([]bool, int, error) {
+func (bitset *Bitset) TestAll(bitPositions ...int) ([]bool, int, error) {
 	res := make([]bool, len(bitset.bits))
 	numSet := 0
-	for i, bit := range bits {
+	for i, bit := range bitPositions {
 		isSet, err := bitset.Test(bit)
 		if err != nil {
 			return nil, 0, err
