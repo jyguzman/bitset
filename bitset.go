@@ -91,6 +91,7 @@ func (bitset *Bitset) FlipAll(bits ...int) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -104,6 +105,24 @@ func (bitset *Bitset) Test(n int) (bool, error) {
 	}
 	idx := len(bitset.bits) - 1 - n/64
 	return bitset.bits[idx]&(1<<(n%64)) >= 1, nil
+}
+
+// TestAll tests if multiple bit and returns a slice of bools that are true/false
+// if the corresponding bits are set, and the number of set bits.
+func (bitset *Bitset) TestAll(bits ...int) ([]bool, int, error) {
+	res := make([]bool, len(bitset.bits))
+	numSet := 0
+	for i, bit := range bits {
+		isSet, err := bitset.Test(bit)
+		if err != nil {
+			return nil, 0, err
+		}
+		if isSet {
+			numSet += 1
+		}
+		res[i] = isSet
+	}
+	return res, numSet, nil
 }
 
 func (bitset *Bitset) Not() {
