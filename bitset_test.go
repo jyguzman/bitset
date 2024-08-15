@@ -10,14 +10,14 @@ import (
 func TestBitSet_BitArrayLen(t *testing.T) {
 	bs := NewBitSet(4416)
 	want := 69
-	if len(bs.bits) != 69 {
-		t.Errorf("BitSet has length %d, want %d", len(bs.bits), want)
+	if len(bs.bitArray) != 69 {
+		t.Errorf("BitSet has length %d, want %d", len(bs.bitArray), want)
 	}
 
 	bs = NewBitSet(420)
 	want = 7
-	if len(bs.bits) != 7 {
-		t.Errorf("BitSet has length %d, want %d", len(bs.bits), want)
+	if len(bs.bitArray) != 7 {
+		t.Errorf("BitSet has length %d, want %d", len(bs.bitArray), want)
 	}
 }
 
@@ -37,15 +37,15 @@ func TestBitSet_OutOfBounds(t *testing.T) {
 func TestBitSet_Set(t *testing.T) {
 	numBits := 544
 	bs := NewBitSet(numBits)
-	for i := len(bs.bits) - 1; i >= 0; i-- {
+	for i := len(bs.bitArray) - 1; i >= 0; i-- {
 		bitPos := i + (i * 64)
 		err := bs.Set(bitPos)
 		if err != nil {
 			t.Error(err)
 		}
-		idx := len(bs.bits) - 1 - bitPos/64
-		if bs.bits[idx] != uint64(math.Pow(2.0, float64(i))) {
-			t.Errorf("Set failed for word %d at index %d", bs.bits[i], i)
+		idx := len(bs.bitArray) - 1 - bitPos/64
+		if bs.bitArray[idx] != uint64(math.Pow(2.0, float64(i))) {
+			t.Errorf("Set failed for word %d at index %d", bs.bitArray[i], i)
 		}
 	}
 }
@@ -53,12 +53,12 @@ func TestBitSet_Set(t *testing.T) {
 func TestBitSet_Test(t *testing.T) {
 	numBits := 544
 	bs := NewBitSet(numBits)
-	for i := len(bs.bits) - 1; i >= 0; i-- {
+	for i := len(bs.bitArray) - 1; i >= 0; i-- {
 		bitPos := i + (i * 64)
 		if err := bs.Set(bitPos); err != nil {
 			t.Error(err)
 		}
-		idx := len(bs.bits) - 1 - bitPos/64
+		idx := len(bs.bitArray) - 1 - bitPos/64
 		isSet, err := bs.Test(idx)
 		if err != nil {
 			t.Error(err)
@@ -107,7 +107,7 @@ func TestBitSet_String(t *testing.T) {
 	err = bs.Set(132)
 	err = bs.Set(65)
 	err = bs.Set(1)
-	fmt.Println(bs.bits)
+	fmt.Println(bs.bitArray)
 	fmt.Println(bs.String())
 	fmt.Println(err)
 }
