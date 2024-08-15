@@ -60,23 +60,23 @@ func TestBitset_Flip(t *testing.T) {}
 func TestBitset_Not(t *testing.T) {}
 
 func TestBitset_String(t *testing.T) {
-	bs := NewBitset(10)
+	bs := NewBitset(512)
 	var err error
-	err = bs.Set(5)
-	err = bs.Set(3)
+	err = bs.Set(132)
+	err = bs.Set(65)
 	err = bs.Set(1)
-	//fmt.Println(bs.String())
+	fmt.Println(bs.bits)
+	fmt.Println(bs.String())
 	fmt.Println(err)
 }
 
 func TestBitset_Count(t *testing.T) {
-	bs := NewBitset(64)
-	want := 100
+	bs := NewBitset(50)
+	want := 10
 	var err error
 	for i := 0; i < want; i++ {
 		err = bs.Set(i)
 	}
-	//fmt.Println(bs.String())
 	if err != nil {
 		t.Error(err)
 	}
@@ -84,4 +84,17 @@ func TestBitset_Count(t *testing.T) {
 	if count != want {
 		t.Errorf("Bitset has count %d, want %d", count, want)
 	}
+	fmt.Println(bs.String())
+}
+
+func Test_Do(t *testing.T) {
+	bs := NewBitset(50)
+	bits := []int{
+		1, 5, 10, 15, 20, 30, 40, 49,
+	}
+	if err := bs.SetAll(bits...); err != nil {
+		t.Error(err)
+	}
+	fmt.Println(bs.String())
+	fmt.Println(bs.Count())
 }

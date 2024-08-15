@@ -1,6 +1,7 @@
 package bitset
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"math/bits"
@@ -33,8 +34,17 @@ func (bitset *Bitset) Set(n int) error {
 		return fmt.Errorf("bit index %d out of range of bitset", n)
 	}
 	idx := len(bitset.bits) - 1 - n/64
-	fmt.Println("idx:", idx, "bit:", n%64)
 	bitset.bits[idx] |= 1 << (n % 64)
+	return nil
+}
+
+// SetAll sets multiple bits.
+func (bitset *Bitset) SetAll(bits ...int) error {
+	for _, bit := range bits {
+		if err := bitset.Set(bit); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -51,6 +61,16 @@ func (bitset *Bitset) Clear(n int) error {
 	return nil
 }
 
+// ClearAll clears multiple bits.
+func (bitset *Bitset) ClearAll(bits ...int) error {
+	for _, bit := range bits {
+		if err := bitset.Clear(bit); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Flip flips the Nth bit, i.e. 0 -> 1 or 1 -> 0. Errors if n < 0 or n >= bitset.size
 func (bitset *Bitset) Flip(n int) error {
 	if n < 0 {
@@ -61,6 +81,16 @@ func (bitset *Bitset) Flip(n int) error {
 	}
 	idx := len(bitset.bits) - 1 - n/64
 	bitset.bits[idx] ^= 1 << (n % 64)
+	return nil
+}
+
+// FlipAll flips multiple bits.
+func (bitset *Bitset) FlipAll(bits ...int) error {
+	for _, bit := range bits {
+		if err := bitset.Flip(bit); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -86,16 +116,15 @@ func (bitset *Bitset) Not() {
 func (bitset *Bitset) Count() int {
 	sum := 0
 	for _, word := range bitset.bits {
-		fmt.Println(word)
 		sum += bits.OnesCount64(word)
 	}
 	return sum
 }
 
-//func (bitset *Bitset) String() string {
-//	buffer := bytes.NewBufferString("")
-//	for _, word := range bitset.bits {
-//		buffer.WriteString(fmt.Sprintf("%b", word))
-//	}
-//	return buffer.String()
-//}
+func (bitset *Bitset) String() string {
+	buffer := bytes.NewBufferString("")
+	for _, word := range bitset.bits {
+		buffer.WriteString(fmt.Sprintf("%b", word))
+	}
+	return buffer.String()
+}
