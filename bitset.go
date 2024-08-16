@@ -15,6 +15,7 @@ type BitSet struct {
 // NewBitSet initializes and returns a BitSet with the given number of bits
 func NewBitSet(numBits int) *BitSet {
 	numWords := int(math.Ceil(float64(numBits) / 64.0))
+	fmt.Println("numWords:", numWords)
 	return &BitSet{
 		size:     numBits,
 		bitArray: make([]uint64, numWords),
@@ -103,8 +104,7 @@ func (bitset *BitSet) Test(n int) (bool, error) {
 // TestBits tests if multiple bit and returns a slice of bools that are true/false
 // if the corresponding bits are set, and the number of set bits.
 func (bitset *BitSet) TestBits(bits []int) ([]bool, int, error) {
-	res := make([]bool, len(bitset.bitArray))
-	numSet := 0
+	res, numSet := make([]bool, len(bits)), 0
 	for i, bit := range bits {
 		isSet, err := bitset.Test(bit)
 		if err != nil {
@@ -120,37 +120,37 @@ func (bitset *BitSet) TestBits(bits []int) ([]bool, int, error) {
 
 // CountSetBits returns the number of set bits
 func (bitset *BitSet) CountSetBits() int {
-	sum := 0
+	count := 0
 	for _, word := range bitset.bitArray {
-		sum += bits.OnesCount64(word)
+		count += bits.OnesCount64(word)
 	}
-	return sum
+	return count
 }
 
 // Or returns the result of bitset OR (|) other.
 func (bitset *BitSet) Or(other *BitSet) *BitSet {
-	smallerSet, greaterSet := bitset, other
+	smallerSet, largerSet := bitset, other
 	if bitset.size > other.size {
-		smallerSet, greaterSet = other, bitset
+		smallerSet, largerSet = other, bitset
 	}
-	newBitArray := make([]uint64, int(math.Ceil(float64(greaterSet.size)/64.0)))
+	newBitArray := make([]uint64, int(math.Ceil(float64(largerSet.size)/64.0)))
 	for i := len(smallerSet.bitArray) - 1; i >= 0; i-- {
-		newBitArray[i] = smallerSet.bitArray[i] | greaterSet.bitArray[i]
+		newBitArray[i] = smallerSet.bitArray[i] | largerSet.bitArray[i]
 	}
-	return &BitSet{size: greaterSet.size, bitArray: newBitArray}
+	return &BitSet{size: largerSet.size, bitArray: newBitArray}
 }
 
 // And returns the result of bitset AND (&) other
 func (bitset *BitSet) And(other *BitSet) *BitSet {
-	smallerSet, greaterSet := bitset, other
+	smallerSet, largerSet := bitset, other
 	if bitset.size > other.size {
-		smallerSet, greaterSet = other, bitset
+		smallerSet, largerSet = other, bitset
 	}
-	newBitArray := make([]uint64, int(math.Ceil(float64(greaterSet.size)/64.0)))
+	newBitArray := make([]uint64, int(math.Ceil(float64(largerSet.size)/64.0)))
 	for i := len(smallerSet.bitArray) - 1; i >= 0; i-- {
-		newBitArray[i] = smallerSet.bitArray[i] & greaterSet.bitArray[i]
+		newBitArray[i] = smallerSet.bitArray[i] & largerSet.bitArray[i]
 	}
-	return &BitSet{size: greaterSet.size, bitArray: newBitArray}
+	return &BitSet{size: largerSet.size, bitArray: newBitArray}
 }
 
 func (bitset *BitSet) String() string {
