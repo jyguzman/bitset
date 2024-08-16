@@ -15,7 +15,6 @@ type BitSet struct {
 // NewBitSet initializes and returns a BitSet with the given number of bits
 func NewBitSet(numBits int) *BitSet {
 	numWords := int(math.Ceil(float64(numBits) / 64.0))
-	fmt.Println("numWords:", numWords)
 	return &BitSet{
 		size:     numBits,
 		bitArray: make([]uint64, numWords),
