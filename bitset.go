@@ -31,18 +31,38 @@ func (bitset *BitSet) Set(n int) error {
 	if err := bitset.checkValidBit(n); err != nil {
 		return err
 	}
-	bit := len(bitset.bitArray) - 1 - n/64
-	bitset.bitArray[bit] |= 1 << (n % 64)
+	bitset.set(n)
 	return nil
 }
 
-// SetBits sets multiple bits.
-func (bitset *BitSet) SetBits(bits []int) error {
-	for _, bit := range bits {
-		if err := bitset.Set(bit); err != nil {
-			return err
+// SetBits sets multiple bits. This operation is atomic; if any bit is invalid,
+// the bitset will roll back to its original state before attempting to set any of the
+// bits.
+func (bitset *BitSet) SetBits(indices []int) error {
+	var originalBits []int8
+
+	for _, idx := range indices {
+		wasSet, err := bitset.Test(idx)
+
+		// out of bounds: roll back
+		if err != nil {
+			for j, ob := range originalBits {
+				// if the bit was 0 before being set, clear it back to 0
+				if ob == 0 {
+					bitset.clear(indices[j])
+				}
+			}
 		}
+
+		if wasSet {
+			originalBits = append(originalBits, 1)
+		} else {
+			originalBits = append(originalBits, 0)
+		}
+
+		bitset.set(idx)
 	}
+
 	return nil
 }
 
@@ -51,18 +71,38 @@ func (bitset *BitSet) Clear(n int) error {
 	if err := bitset.checkValidBit(n); err != nil {
 		return err
 	}
-	bit := len(bitset.bitArray) - 1 - n/64
-	bitset.bitArray[bit] &= ^(1 << (n % 64))
+	bitset.clear(n)
 	return nil
 }
 
-// ClearBits clears the bits at the given positions.
-func (bitset *BitSet) ClearBits(bits []int) error {
-	for _, bit := range bits {
-		if err := bitset.Clear(bit); err != nil {
-			return err
+// ClearBits clears multiple bits. This operation is atomic; if any bit is invalid,
+// the bitset will roll back to its original state before attempting to clear any of the
+// bits.
+func (bitset *BitSet) ClearBits(indices []int) error {
+	var originalBits []int8
+
+	for _, idx := range indices {
+		wasSet, err := bitset.Test(idx)
+
+		// out of bounds: roll back
+		if err != nil {
+			for j, ob := range originalBits {
+				// if the bit was 1 before being cleared, set it back to 1
+				if ob == 1 {
+					bitset.set(indices[j])
+				}
+			}
 		}
+
+		if wasSet {
+			originalBits = append(originalBits, 1)
+		} else {
+			originalBits = append(originalBits, 0)
+		}
+
+		bitset.clear(idx)
 	}
+
 	return nil
 }
 
@@ -76,16 +116,22 @@ func (bitset *BitSet) Flip(n int) error {
 	if err := bitset.checkValidBit(n); err != nil {
 		return err
 	}
-	bit := len(bitset.bitArray) - 1 - n/64
-	bitset.bitArray[bit] ^= 1 << (n % 64)
+	bitset.flip(n)
 	return nil
 }
 
-// FlipBits flips multiple bits.
+// FlipBits flips multiple bits. This operation is atomic; if any bit is invalid,
+// the bitset will roll back to its original state.
 func (bitset *BitSet) FlipBits(bits []int) error {
-	for _, bit := range bits {
-		if err := bitset.Flip(bit); err != nil {
-			return err
+	for _, idx := range bits {
+		err := bitset.Flip(idx)
+		if err != nil {
+			for _, i := range bits {
+				if i == idx {
+					return err
+				}
+				bitset.flip(i)
+			}
 		}
 	}
 	return nil
@@ -96,8 +142,7 @@ func (bitset *BitSet) Test(n int) (bool, error) {
 	if err := bitset.checkValidBit(n); err != nil {
 		return false, err
 	}
-	idx := len(bitset.bitArray) - 1 - n/64
-	return bitset.bitArray[idx]&(1<<(n%64)) >= 1, nil
+	return bitset.test(n), nil
 }
 
 // TestBits tests if multiple bit and returns a slice of bools that are true/false
@@ -152,12 +197,47 @@ func (bitset *BitSet) And(other *BitSet) *BitSet {
 	return &BitSet{size: largerSet.size, bitArray: newBitArray}
 }
 
+// Not flips each bit of the bitset
+func (bitset *BitSet) Not() {
+	for i := range bitset.bitArray {
+		bitset.bitArray[i] = ^bitset.bitArray[i]
+	}
+}
+
 func (bitset *BitSet) String() string {
 	buffer := bytes.NewBufferString("")
 	for _, word := range bitset.bitArray {
 		buffer.WriteString(fmt.Sprintf("%b", word))
 	}
 	return buffer.String()
+}
+
+// set sets the Nth bit to 1.
+func (bitset *BitSet) set(n int) {
+	word, idx := bitset.getWordAndPos(n)
+	bitset.bitArray[word] ^= 1 << idx
+}
+
+// clear zeroes the Nth bit.
+func (bitset *BitSet) clear(n int) {
+	word, idx := bitset.getWordAndPos(n)
+	bitset.bitArray[word] &= ^(1 << idx)
+}
+
+// flip flips the Nth bit, i.e. 0 -> 1 or 1 -> 0.
+func (bitset *BitSet) flip(n int) {
+	word, idx := bitset.getWordAndPos(n)
+	bitset.bitArray[word] |= 1 << idx
+}
+
+// test checks if the Nth bit is set.
+func (bitset *BitSet) test(n int) bool {
+	word, idx := bitset.getWordAndPos(n)
+	return bitset.bitArray[word]&(1<<idx) >= 1
+}
+
+func (bitset *BitSet) getWordAndPos(n int) (int, int) {
+	return len(bitset.bitArray) - 1 - n/64, n % 64
 }
 
 func (bitset *BitSet) checkValidBit(n int) error {

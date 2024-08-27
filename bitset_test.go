@@ -289,6 +289,18 @@ func TestBitSet_And(t *testing.T) {
 	fmt.Println(res)
 }
 
+func TestBitSet_Not(t *testing.T) {
+	a := NewBitSet(20)
+
+	aToSet := []int{1, 5, 10, 15, 17}
+	if err := a.SetBits(aToSet); err != nil {
+		t.Error(err)
+	}
+	fmt.Println(a)
+	a.Not()
+	fmt.Println(a)
+}
+
 func TestBitSet_String(t *testing.T) {
 	numBits := rand.Intn(7)
 	numBitsToSet := rand.Intn(numBits)
