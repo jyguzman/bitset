@@ -40,11 +40,10 @@ func (bitset *BitSet) Set(n int) error {
 // bits.
 func (bitset *BitSet) SetBits(indices []int) error {
 	var originalBits []int8
-
 	for _, idx := range indices {
 		wasSet, err := bitset.Test(idx)
 
-		// out of bounds: roll back
+		// out of bounds: roll back by un-setting bits up to the invalid bit
 		if err != nil {
 			for j, ob := range originalBits {
 				// if the bit was 0 before being set, clear it back to 0
@@ -52,6 +51,7 @@ func (bitset *BitSet) SetBits(indices []int) error {
 					bitset.clear(indices[j])
 				}
 			}
+			return err
 		}
 
 		if wasSet {
@@ -84,7 +84,7 @@ func (bitset *BitSet) ClearBits(indices []int) error {
 	for _, idx := range indices {
 		wasSet, err := bitset.Test(idx)
 
-		// out of bounds: roll back
+		// out of bounds: roll back by un-clearing bits up to invalid bit
 		if err != nil {
 			for j, ob := range originalBits {
 				// if the bit was 1 before being cleared, set it back to 1
@@ -92,6 +92,7 @@ func (bitset *BitSet) ClearBits(indices []int) error {
 					bitset.set(indices[j])
 				}
 			}
+			return err
 		}
 
 		if wasSet {
@@ -171,30 +172,38 @@ func (bitset *BitSet) CountSetBits() int {
 	return count
 }
 
-// Or returns the result of bitset OR (|) other.
-func (bitset *BitSet) Or(other *BitSet) *BitSet {
-	smallerSet, largerSet := bitset, other
-	if bitset.size > other.size {
-		smallerSet, largerSet = other, bitset
+// Or sets the bit of the receiver to the result of the receiver OR (|) other
+func (bitset *BitSet) Or(other *BitSet) {
+	recvBitsLeft, otherBitsLeft := bitset.size, other.size
+	for i, j := len(bitset.bitArray)-1, len(other.bitArray)-1; i >= 0 && j >= 0; i, j = i-1, j-1 {
+		btWord, otherWord := bitset.bitArray[i], other.bitArray[j]
+		if recvBitsLeft < 64 {
+			btWord = mask(btWord, recvBitsLeft)
+		}
+		if otherBitsLeft < 64 {
+			otherWord = mask(otherWord, otherBitsLeft)
+		}
+		bitset.bitArray[i] = btWord | otherWord
+		recvBitsLeft -= 64
+		otherBitsLeft -= 64
 	}
-	newBitArray := make([]uint64, int(math.Ceil(float64(largerSet.size)/64.0)))
-	for i := len(smallerSet.bitArray) - 1; i >= 0; i-- {
-		newBitArray[i] = smallerSet.bitArray[i] | largerSet.bitArray[i]
-	}
-	return &BitSet{size: largerSet.size, bitArray: newBitArray}
 }
 
-// And returns the result of bitset AND (&) other
-func (bitset *BitSet) And(other *BitSet) *BitSet {
-	smallerSet, largerSet := bitset, other
-	if bitset.size > other.size {
-		smallerSet, largerSet = other, bitset
+// And sets the bit of the receiver to the result of the receiver AND (&) other
+func (bitset *BitSet) And(other *BitSet) {
+	recvBitsLeft, otherBitsLeft := bitset.size, other.size
+	for i, j := len(bitset.bitArray)-1, len(other.bitArray)-1; i >= 0 && j >= 0; i, j = i-1, j-1 {
+		btWord, otherWord := bitset.bitArray[i], other.bitArray[j]
+		if recvBitsLeft < 64 {
+			btWord = mask(btWord, recvBitsLeft)
+		}
+		if otherBitsLeft < 64 {
+			otherWord = mask(otherWord, otherBitsLeft)
+		}
+		bitset.bitArray[i] = btWord & otherWord
+		recvBitsLeft -= 64
+		otherBitsLeft -= 64
 	}
-	newBitArray := make([]uint64, int(math.Ceil(float64(largerSet.size)/64.0)))
-	for i := len(smallerSet.bitArray) - 1; i >= 0; i-- {
-		newBitArray[i] = smallerSet.bitArray[i] & largerSet.bitArray[i]
-	}
-	return &BitSet{size: largerSet.size, bitArray: newBitArray}
 }
 
 // Not flips each bit of the bitset
@@ -204,10 +213,52 @@ func (bitset *BitSet) Not() {
 	}
 }
 
+// Or returns the result of bitset OR (|) other.
+func Or(bs1 *BitSet, bs2 *BitSet) *BitSet {
+	smallerSet, largerSet := bs1, bs2
+	if bs1.size > bs2.size {
+		smallerSet, largerSet = bs2, bs1
+	}
+	newBitArray := make([]uint64, int(math.Ceil(float64(largerSet.size)/64.0)))
+	for i := len(smallerSet.bitArray) - 1; i >= 0; i-- {
+		newBitArray[i] = smallerSet.bitArray[i] | largerSet.bitArray[i]
+	}
+	return &BitSet{size: largerSet.size, bitArray: newBitArray}
+}
+
+// And returns the result of bitset AND (&) other
+func And(bs1 *BitSet, bs2 *BitSet) *BitSet {
+	smallerSet, largerSet := bs1, bs2
+	if bs1.size > bs2.size {
+		smallerSet, largerSet = bs2, bs1
+	}
+	newBitArray := make([]uint64, int(math.Ceil(float64(largerSet.size)/64.0)))
+	for i := len(smallerSet.bitArray) - 1; i >= 0; i-- {
+		newBitArray[i] = smallerSet.bitArray[i] & largerSet.bitArray[i]
+	}
+	return &BitSet{size: largerSet.size, bitArray: newBitArray}
+}
+
+// Not returns a new bitset obtained from flipping each bit of the input bitset
+func Not(bs *BitSet) *BitSet {
+	newBitArray := make([]uint64, len(bs.bitArray))
+	for i := range bs.bitArray {
+		newBitArray[i] = ^bs.bitArray[i]
+	}
+	return &BitSet{size: bs.size, bitArray: newBitArray}
+}
+
 func (bitset *BitSet) String() string {
-	buffer := bytes.NewBufferString("")
-	for _, word := range bitset.bitArray {
-		buffer.WriteString(fmt.Sprintf("%b", word))
+	buffer := bytes.Buffer{}
+	//count := bitset.size
+
+	for i, word := range bitset.bitArray {
+		if word == 0 && i != len(bitset.bitArray)-1 {
+			continue
+		}
+		str := fmt.Sprintf("%b", word)
+		buffer.WriteString(str)
+		//buffer.WriteString(fmt.Sprintf("%b", word))
 	}
 	return buffer.String()
 }
@@ -237,7 +288,12 @@ func (bitset *BitSet) test(n int) bool {
 }
 
 func (bitset *BitSet) getWordAndPos(n int) (int, int) {
-	return len(bitset.bitArray) - 1 - n/64, n % 64
+	return len(bitset.bitArray) - n/64 - 1, n % 64
+}
+
+// mask retains the first n bits of a word and zeroes out the rest, returning the result
+func mask(word uint64, n int) uint64 {
+	return word & ((1 << n) - 1)
 }
 
 func (bitset *BitSet) checkValidBit(n int) error {

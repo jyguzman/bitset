@@ -259,24 +259,62 @@ func TestBitSet_FlipBits(t *testing.T) {
 	}
 }
 
-func TestBitSet_Or(t *testing.T) {
-	a := NewBitSet(20)
-	b := NewBitSet(20)
+func TestBitSet_Or_EqualLength(t *testing.T) {
+	a := NewBitSet(63)
+	b := NewBitSet(64)
 
-	aToSet := []int{0, 1, 2, 4}
+	aToSet := []int{1}
+	bToSet := []int{0, 2, 4, 6}
 	if err := a.SetBits(aToSet); err != nil {
 		t.Error(err)
 	}
-	res := a.Or(b)
-	fmt.Println(res)
+	if err := b.SetBits(bToSet); err != nil {
+		t.Error(err)
+	}
+	a.Or(b)
+	fmt.Println(a)
 }
 
-func TestBitSet_And(t *testing.T) {
+func TestBitSet_Or_SmallerReceiver(t *testing.T) {
 	a := NewBitSet(20)
-	b := NewBitSet(13)
+	b := NewBitSet(100)
+
+	aToSet := []int{1}
+	bToSet := []int{0, 2, 4, 6}
+	if err := a.SetBits(aToSet); err != nil {
+		t.Error(err)
+	}
+	if err := b.SetBits(bToSet); err != nil {
+		t.Error(err)
+	}
+	fmt.Println("a:", a, "b:", b)
+	a.Or(b)
+	fmt.Println(a)
+}
+
+func TestBitSet_Or_LargerReceiver(t *testing.T) {
+	a := NewBitSet(100)
+	b := NewBitSet(20)
+
+	//aToSet := []int{1}
+	bToSet := []int{0, 2, 4, 6}
+	//if err := a.SetBits(aToSet); err != nil {
+	//	t.Error(err)
+	//}
+	if err := b.SetBits(bToSet); err != nil {
+		t.Error(err)
+	}
+	fmt.Println("a:", a, "b:", b)
+	a.Or(b)
+	fmt.Println(a)
+}
+
+func TestBitSet_And_EqualSize(t *testing.T) {
+	a := NewBitSet(20)
+	b := NewBitSet(20)
 
 	aToSet := []int{1, 5, 10, 15, 17}
-	bToSet := []int{0, 3, 6, 9, 12}
+	bToSet := []int{1, 5, 10, 15, 17}
 	if err := a.SetBits(aToSet); err != nil {
 		t.Error(err)
 	}
@@ -284,9 +322,30 @@ func TestBitSet_And(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Println("a:", a, "b: ", b)
-	res := a.And(b)
+	a.And(b)
+	//res := And(a, b)
 	fmt.Printf("%b\n", 0b00101000010000100010&0b1001001001001)
-	fmt.Println(res)
+	fmt.Println(a)
+}
+
+func TestBitSet_And_Smaller(t *testing.T) {
+	a := NewBitSet(20)
+	b := NewBitSet(64)
+
+	aToSet := []int{1, 5, 10, 15, 17}
+	bToSet := []int{1, 5, 10, 15, 17}
+	if err := a.SetBits(aToSet); err != nil {
+		t.Error(err)
+	}
+	if err := b.SetBits(bToSet); err != nil {
+		t.Error(err)
+	}
+	fmt.Println("b arr:", b.bitArray)
+	fmt.Println("a:", a, "b: ", b)
+	a.And(b)
+	//res := And(a, b)
+	fmt.Printf("%b\n", 0b00101000010000100010&0b1001001001001)
+	fmt.Println(a)
 }
 
 func TestBitSet_Not(t *testing.T) {
