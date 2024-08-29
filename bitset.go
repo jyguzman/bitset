@@ -12,7 +12,7 @@ type BitSet struct {
 	bitArray []uint64
 }
 
-// NewBitSet initializes and returns a BitSet with the given number of bits
+// NewBitSet initializes and returns a BitSet holding the given number of bits
 func NewBitSet(numBits int) *BitSet {
 	numWords := int(math.Ceil(float64(numBits) / 64.0))
 	return &BitSet{
@@ -21,12 +21,12 @@ func NewBitSet(numBits int) *BitSet {
 	}
 }
 
-// Size returns the number of bits of the bitset
+// Size returns the number of bits the bitset holds
 func (bitset *BitSet) Size() int {
 	return bitset.size
 }
 
-// Set sets the Nth bit. Errors if n < 0 or n >= bitset.size
+// Set sets the Nth bit to 1. Errors if n < 0 or n >= bitset.size
 func (bitset *BitSet) Set(n int) error {
 	if err := bitset.checkValidBit(n); err != nil {
 		return err
@@ -122,7 +122,7 @@ func (bitset *BitSet) Flip(n int) error {
 }
 
 // FlipBits flips multiple bits. This operation is atomic; if any bit is invalid,
-// the bitset will roll back to its original state.
+// the bitset will roll back to its original state before the attempt to flip the bits.
 func (bitset *BitSet) FlipBits(bits []int) error {
 	for _, idx := range bits {
 		err := bitset.Flip(idx)
@@ -138,7 +138,7 @@ func (bitset *BitSet) FlipBits(bits []int) error {
 	return nil
 }
 
-// Test checks if the Nth bit is set. Errors if n < 0 or n >= bitset.size
+// Test checks if the Nth bit is set to 1. Errors if n < 0 or n >= bitset.size
 func (bitset *BitSet) Test(n int) (bool, error) {
 	if err := bitset.checkValidBit(n); err != nil {
 		return false, err
@@ -146,8 +146,8 @@ func (bitset *BitSet) Test(n int) (bool, error) {
 	return bitset.test(n), nil
 }
 
-// TestBits tests if multiple bit and returns a slice of bools that are true/false
-// if the corresponding bits are set, and the number of set bits.
+// TestBits tests if multiple bits are set to 1. Returns a slice of bools that are true/false
+// if the corresponding bits are set and the number of set bits.
 func (bitset *BitSet) TestBits(bits []int) ([]bool, int, error) {
 	res, numSet := make([]bool, len(bits)), 0
 	for i, bit := range bits {
@@ -163,7 +163,7 @@ func (bitset *BitSet) TestBits(bits []int) ([]bool, int, error) {
 	return res, numSet, nil
 }
 
-// CountSetBits returns the number of set bits
+// CountSetBits returns the number of set bits.
 func (bitset *BitSet) CountSetBits() int {
 	count := 0
 	for _, word := range bitset.bitArray {
@@ -172,7 +172,7 @@ func (bitset *BitSet) CountSetBits() int {
 	return count
 }
 
-// Or sets the bit of the receiver to the result of the receiver OR (|) other
+// Or sets the bits of the receiver to the result of the receiver OR (|) other.
 func (bitset *BitSet) Or(other *BitSet) {
 	recvBitsLeft, otherBitsLeft := bitset.size, other.size
 	for i, j := len(bitset.bitArray)-1, len(other.bitArray)-1; i >= 0 && j >= 0; i, j = i-1, j-1 {
@@ -188,7 +188,7 @@ func (bitset *BitSet) Or(other *BitSet) {
 	}
 }
 
-// And sets the bit of the receiver to the result of the receiver AND (&) other
+// And sets the bits of the receiver to the result of the receiver AND (&) other.
 func (bitset *BitSet) And(other *BitSet) {
 	recvBitsLeft, otherBitsLeft := bitset.size, other.size
 	for i, j := len(bitset.bitArray)-1, len(other.bitArray)-1; i >= 0 && j >= 0; i, j = i-1, j-1 {
@@ -248,15 +248,11 @@ func Not(bs *BitSet) *BitSet {
 
 func (bitset *BitSet) String() string {
 	buffer := bytes.Buffer{}
-	//count := bitset.size
-
 	for i, word := range bitset.bitArray {
 		if word == 0 && i != len(bitset.bitArray)-1 {
 			continue
 		}
-		str := fmt.Sprintf("%b", word)
-		buffer.WriteString(str)
-		//buffer.WriteString(fmt.Sprintf("%b", word))
+		buffer.WriteString(fmt.Sprintf("%b", word))
 	}
 	return buffer.String()
 }
