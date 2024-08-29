@@ -260,11 +260,11 @@ func TestBitSet_FlipBits(t *testing.T) {
 }
 
 func TestBitSet_Or_EqualLength(t *testing.T) {
-	a := NewBitSet(63)
-	b := NewBitSet(64)
+	a := NewBitSet(10)
+	b := NewBitSet(90)
 
 	aToSet := []int{1}
-	bToSet := []int{0, 2, 4, 6}
+	bToSet := []int{0, 2, 4, 6, 45}
 	if err := a.SetBits(aToSet); err != nil {
 		t.Error(err)
 	}
@@ -309,12 +309,12 @@ func TestBitSet_Or_LargerReceiver(t *testing.T) {
 	fmt.Println(a)
 }
 
-func TestBitSet_And_EqualSize(t *testing.T) {
-	a := NewBitSet(20)
-	b := NewBitSet(20)
+func TestBitSet_And_LargerReceiver(t *testing.T) {
+	a := NewBitSet(200)
+	b := NewBitSet(30)
 
-	aToSet := []int{1, 5, 10, 15, 17}
-	bToSet := []int{1, 5, 10, 15, 17}
+	aToSet := []int{1, 5, 10, 15, 17, 29}
+	bToSet := []int{29}
 	if err := a.SetBits(aToSet); err != nil {
 		t.Error(err)
 	}
@@ -324,8 +324,8 @@ func TestBitSet_And_EqualSize(t *testing.T) {
 	fmt.Println("a:", a, "b: ", b)
 	a.And(b)
 	//res := And(a, b)
-	fmt.Printf("%b\n", 0b00101000010000100010&0b1001001001001)
-	fmt.Println(a)
+	//fmt.Println(a)
+
 }
 
 func TestBitSet_And_Smaller(t *testing.T) {

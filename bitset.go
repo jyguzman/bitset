@@ -177,13 +177,12 @@ func (bitset *BitSet) Or(other *BitSet) {
 	recvBitsLeft, otherBitsLeft := bitset.size, other.size
 	for i, j := len(bitset.bitArray)-1, len(other.bitArray)-1; i >= 0 && j >= 0; i, j = i-1, j-1 {
 		btWord, otherWord := bitset.bitArray[i], other.bitArray[j]
-		if recvBitsLeft < 64 {
-			btWord = mask(btWord, recvBitsLeft)
+		if recvBitsLeft < 64 || otherBitsLeft < 64 {
+			maskLen := int(math.Min(float64(recvBitsLeft), float64(otherBitsLeft)))
+			bitset.bitArray[i] = mask(btWord|otherWord, maskLen)
+		} else {
+			bitset.bitArray[i] = btWord | otherWord
 		}
-		if otherBitsLeft < 64 {
-			otherWord = mask(otherWord, otherBitsLeft)
-		}
-		bitset.bitArray[i] = btWord | otherWord
 		recvBitsLeft -= 64
 		otherBitsLeft -= 64
 	}
@@ -194,13 +193,12 @@ func (bitset *BitSet) And(other *BitSet) {
 	recvBitsLeft, otherBitsLeft := bitset.size, other.size
 	for i, j := len(bitset.bitArray)-1, len(other.bitArray)-1; i >= 0 && j >= 0; i, j = i-1, j-1 {
 		btWord, otherWord := bitset.bitArray[i], other.bitArray[j]
-		if recvBitsLeft < 64 {
-			btWord = mask(btWord, recvBitsLeft)
+		if recvBitsLeft < 64 || otherBitsLeft < 64 {
+			maskLen := int(math.Min(float64(recvBitsLeft), float64(otherBitsLeft)))
+			bitset.bitArray[i] = mask(btWord&otherWord, maskLen)
+		} else {
+			bitset.bitArray[i] = btWord & otherWord
 		}
-		if otherBitsLeft < 64 {
-			otherWord = mask(otherWord, otherBitsLeft)
-		}
-		bitset.bitArray[i] = btWord & otherWord
 		recvBitsLeft -= 64
 		otherBitsLeft -= 64
 	}
@@ -301,7 +299,7 @@ func (bitset *BitSet) checkValidBit(n int) error {
 		return fmt.Errorf("test: n must be >= 0")
 	}
 	if n >= bitset.size {
-		return fmt.Errorf("bit index %d out of range of bitset", n)
+		return fmt.Errorf("bit index %d out of range of bitset of size %d", n, bitset.size)
 	}
 	return nil
 }
