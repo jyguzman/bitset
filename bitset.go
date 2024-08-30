@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/bits"
+	"strings"
 )
 
 type BitSet struct {
@@ -176,7 +177,24 @@ func (bitset *BitSet) CountSetBits() int {
 func (bitset *BitSet) Or(other *BitSet) {
 	//recvBitsLeft, otherBitsLeft := bitset.size, other.size
 	recvBitsLeft := bitset.size
-	for i, j := len(bitset.words)-1, len(other.words)-1; i >= 0 && j >= 0; i, j = i-1, j-1 {
+	//for i, j := len(bitset.words)-1, len(other.words)-1; i >= 0 && j >= 0; i, j = i-1, j-1 {
+	//	btWord, otherWord := bitset.words[i], other.words[j]
+	//	//if recvBitsLeft < 64 || otherBitsLeft < 64 {
+	//	//	maskLen := int(math.Min(float64(recvBitsLeft), float64(otherBitsLeft)))
+	//	//	bitset.words[i] = mask(btWord|otherWord, maskLen)
+	//	//} else {
+	//	//	bitset.words[i] = btWord | otherWord
+	//	//}
+	//	if recvBitsLeft < 64 {
+	//		//maskLen := int(math.Min(float64(recvBitsLeft), float64(otherBitsLeft)))
+	//		bitset.words[i] = mask(btWord|otherWord, recvBitsLeft)
+	//	} else {
+	//		bitset.words[i] = btWord | otherWord
+	//	}
+	//	recvBitsLeft -= 64
+	//	//otherBitsLeft -= 64
+	//}
+	for i, j := 0, 0; i < len(bitset.words) && j < len(other.words); i, j = i+1, j+1 {
 		btWord, otherWord := bitset.words[i], other.words[j]
 		//if recvBitsLeft < 64 || otherBitsLeft < 64 {
 		//	maskLen := int(math.Min(float64(recvBitsLeft), float64(otherBitsLeft)))
@@ -277,13 +295,15 @@ func Not(bs *BitSet) *BitSet {
 
 func (bitset *BitSet) String() string {
 	buffer := bytes.Buffer{}
-	for i, word := range bitset.words {
-		if word == 0 && i != len(bitset.words)-1 {
-			continue
+	for i := len(bitset.words) - 1; i >= 0; i-- {
+		word := bitset.words[i]
+		if i+1 < len(bitset.words) && bitset.words[i+1] != 0 {
+			buffer.WriteString(fmt.Sprintf("%.64b", word))
+		} else {
+			buffer.WriteString(fmt.Sprintf("%b", word))
 		}
-		buffer.WriteString(fmt.Sprintf("%b", word))
 	}
-	return buffer.String()
+	return strings.TrimLeft(buffer.String(), "0")
 }
 
 // set sets the Nth bit to 1.
@@ -307,15 +327,11 @@ func (bitset *BitSet) flip(n int) {
 // test checks if the Nth bit is set.
 func (bitset *BitSet) test(n int) bool {
 	wordIdx, bitIdx := bitset.getWordAndPos(n)
-	//fmt.Println("wordIdx:", wordIdx)
 	return bitset.words[wordIdx]&(1<<bitIdx) >= 1
 }
 
 func (bitset *BitSet) getWordAndPos(n int) (int, int) {
-	fmt.Println("arr:", bitset.words, bitset.size)
-	fmt.Println("n:", n)
-	bitIdx := n % 64
-	return len(bitset.words) - n/64 - 1, bitIdx
+	return n / 64, n % 64
 }
 
 // mask retains the first n bits of a word and zeroes out the rest, returning the result
