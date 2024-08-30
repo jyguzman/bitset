@@ -287,15 +287,6 @@ func (bs *BitSet) getWordAndPos(n int) (int, int) {
 	return n / 64, n % 64
 }
 
-// mask retains the first n bits of a word and zeroes out the rest, returning the result.
-// If n == 0 the original word is returned
-func mask(word uint64, n int) uint64 {
-	if n == 0 {
-		return word
-	}
-	return word & ((1 << n) - 1)
-}
-
 func (bs *BitSet) checkValidBit(n int) error {
 	if n < 0 {
 		return fmt.Errorf("test: n must be >= 0")
@@ -304,4 +295,13 @@ func (bs *BitSet) checkValidBit(n int) error {
 		return fmt.Errorf("bit index %d out of range of bitset of size %d", n, bs.size)
 	}
 	return nil
+}
+
+// mask retains the first n bits of a word and zeroes out the rest, returning the result.
+// If n == 0 the original word is returned
+func mask(word uint64, n int) uint64 {
+	if n == 0 {
+		return word
+	}
+	return word & ((1 << n) - 1)
 }
