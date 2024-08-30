@@ -276,11 +276,11 @@ func TestBitSet_Or_EqualLength(t *testing.T) {
 }
 
 func TestBitSet_Or_SmallerReceiver(t *testing.T) {
-	a := NewBitSet(100)
+	a := NewBitSet(50)
 	b := NewBitSet(200)
 
 	aToSet := []int{1}
-	bToSet := []int{0, 2, 4, 6, 78, 119}
+	bToSet := []int{0, 2, 4, 6, 64}
 	if err := a.SetBits(aToSet); err != nil {
 		t.Error(err)
 	}
