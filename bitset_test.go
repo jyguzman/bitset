@@ -12,8 +12,8 @@ func TestBitSet_BitArrayLenDivisibleBy64(t *testing.T) {
 	numBits := 512
 	bs := NewBitSet(numBits)
 	want := 8
-	if len(bs.bitArray) != want {
-		t.Errorf("BitSet has length %d, want %d", len(bs.bitArray), want)
+	if len(bs.words) != want {
+		t.Errorf("BitSet has length %d, want %d", len(bs.words), want)
 	}
 }
 
@@ -21,20 +21,20 @@ func TestBitSet_BitArrayLenNotDivisibleBy64(t *testing.T) {
 	numBits := 512
 	bs := NewBitSet(numBits + 1)
 	want := 9
-	if len(bs.bitArray) != want {
-		t.Errorf("BitSet has length %d, want %d", len(bs.bitArray), want)
+	if len(bs.words) != want {
+		t.Errorf("BitSet has length %d, want %d", len(bs.words), want)
 	}
 	bs = NewBitSet(numBits - 1)
 	want = 8
-	if len(bs.bitArray) != want {
-		t.Errorf("BitSet has length %d, want %d", len(bs.bitArray), want)
+	if len(bs.words) != want {
+		t.Errorf("BitSet has length %d, want %d", len(bs.words), want)
 	}
 }
 
 func TestBitSet_Test(t *testing.T) {
-	bitArray := []uint64{uint64(math.Pow(2.0, 63.0)) + 1}
+	words := []uint64{uint64(math.Pow(2.0, 63.0)) + 1}
 	// intializing bitset to binary representation of 2^63 + 1, so bits 0 and 63 should be set
-	bs := &BitSet{size: 64, bitArray: bitArray}
+	bs := &BitSet{size: 64, words: words}
 
 	isSet, err := bs.Test(63)
 	if !isSet {
@@ -63,9 +63,9 @@ func TestBitSet_Test(t *testing.T) {
 }
 
 func TestBitSet_TestBits(t *testing.T) {
-	bitArray := []uint64{uint64(math.Pow(2.0, 63.0)) + uint64(math.Pow(2.0, 30.0)) + 1}
+	words := []uint64{uint64(math.Pow(2.0, 63.0)) + uint64(math.Pow(2.0, 30.0)) + 1}
 	// intializing bitset to binary representation of 2^63 + 2^30 + 1, so bits 0, 30, and 63 should be set
-	bs := &BitSet{size: 64, bitArray: bitArray}
+	bs := &BitSet{size: 64, words: words}
 
 	bitsToTest := []int{0, 15, 30, 45, 63}
 
@@ -134,9 +134,9 @@ func TestBitSet_SetBits(t *testing.T) {
 }
 
 func TestBitSet_Clear(t *testing.T) {
-	bitArray := []uint64{uint64(math.Pow(2.0, 63.0)) + 1}
+	words := []uint64{uint64(math.Pow(2.0, 63.0)) + 1}
 	// intializing bitset to binary representation of 2^63 + 1, so bits 0 and 63 should be set
-	bs := &BitSet{size: 64, bitArray: bitArray}
+	bs := &BitSet{size: 64, words: words}
 
 	err := bs.Clear(64)
 	if err == nil {
@@ -173,9 +173,9 @@ func TestBitSet_Clear(t *testing.T) {
 }
 
 func TestBitSet_ClearBits(t *testing.T) {
-	bitArray := []uint64{uint64(math.Pow(2.0, 63.0)) + uint64(math.Pow(2.0, 30.0)) + 1}
+	words := []uint64{uint64(math.Pow(2.0, 63.0)) + uint64(math.Pow(2.0, 30.0)) + 1}
 	// intializing bitset to binary representation of 2^63 + 2^30 + 1, so bits 0, 30, and 63 should be set
-	bs := &BitSet{size: 64, bitArray: bitArray}
+	bs := &BitSet{size: 64, words: words}
 
 	bitsToClear := []int{0, 15, 30, 45, 63}
 	if err := bs.ClearBits(bitsToClear); err != nil {
@@ -194,9 +194,9 @@ func TestBitSet_ClearBits(t *testing.T) {
 }
 
 func TestBitSet_Flip(t *testing.T) {
-	bitArray := []uint64{uint64(math.Pow(2.0, 63.0)) + 1}
+	words := []uint64{uint64(math.Pow(2.0, 63.0)) + 1}
 	// intializing bitset to binary representation of 2^63 + 1, so bits 0 and 63 should be set
-	bs := &BitSet{size: 64, bitArray: bitArray}
+	bs := &BitSet{size: 64, words: words}
 
 	err := bs.Flip(64)
 	if err == nil {
@@ -239,9 +239,9 @@ func TestBitSet_Flip(t *testing.T) {
 }
 
 func TestBitSet_FlipBits(t *testing.T) {
-	bitArray := []uint64{uint64(math.Pow(2.0, 63.0)) + uint64(math.Pow(2.0, 30.0)) + 1}
+	words := []uint64{uint64(math.Pow(2.0, 63.0)) + uint64(math.Pow(2.0, 30.0)) + 1}
 	// intializing bitset to binary representation of 2^63 + 2^30 + 1, so bits 0, 30, and 63 should be set
-	bs := &BitSet{size: 64, bitArray: bitArray}
+	bs := &BitSet{size: 64, words: words}
 
 	bitsToFlip := []int{0, 15, 30, 45, 63}
 	if err := bs.FlipBits(bitsToFlip); err != nil {
@@ -276,18 +276,18 @@ func TestBitSet_Or_EqualLength(t *testing.T) {
 }
 
 func TestBitSet_Or_SmallerReceiver(t *testing.T) {
-	a := NewBitSet(20)
+	a := NewBitSet(200)
 	b := NewBitSet(100)
 
 	aToSet := []int{1}
-	bToSet := []int{0, 2, 4, 6}
+	bToSet := []int{0, 2, 4, 6, 64}
 	if err := a.SetBits(aToSet); err != nil {
 		t.Error(err)
 	}
 	if err := b.SetBits(bToSet); err != nil {
 		t.Error(err)
 	}
-	fmt.Println("a:", a, "b:", b)
+	fmt.Println("a:", a, "b:", b, len(b.String()))
 	a.Or(b)
 	fmt.Println(a)
 }
@@ -310,11 +310,11 @@ func TestBitSet_Or_LargerReceiver(t *testing.T) {
 }
 
 func TestBitSet_And_LargerReceiver(t *testing.T) {
-	a := NewBitSet(200)
-	b := NewBitSet(30)
+	a := NewBitSet(30)
+	b := NewBitSet(200)
 
 	aToSet := []int{1, 5, 10, 15, 17, 29}
-	bToSet := []int{29}
+	bToSet := []int{29, 150}
 	if err := a.SetBits(aToSet); err != nil {
 		t.Error(err)
 	}
@@ -324,7 +324,7 @@ func TestBitSet_And_LargerReceiver(t *testing.T) {
 	fmt.Println("a:", a, "b: ", b)
 	a.And(b)
 	//res := And(a, b)
-	//fmt.Println(a)
+	fmt.Println(a)
 
 }
 
@@ -340,11 +340,26 @@ func TestBitSet_And_Smaller(t *testing.T) {
 	if err := b.SetBits(bToSet); err != nil {
 		t.Error(err)
 	}
-	fmt.Println("b arr:", b.bitArray)
+	fmt.Println("b arr:", b.words)
 	fmt.Println("a:", a, "b: ", b)
 	a.And(b)
 	//res := And(a, b)
 	fmt.Printf("%b\n", 0b00101000010000100010&0b1001001001001)
+	fmt.Println(a)
+}
+
+func TestBitSet_Xor_Smaller(t *testing.T) {
+	a := NewBitSet(20)
+	b := NewBitSet(64)
+
+	a.Not()
+	b.Not()
+	aToClear := []int{1, 5, 10, 15, 17}
+	if err := a.ClearBits(aToClear); err != nil {
+		t.Error(err)
+	}
+	fmt.Println(a, b)
+	a.Xor(b)
 	fmt.Println(a)
 }
 
