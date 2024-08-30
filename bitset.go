@@ -22,33 +22,33 @@ func NewBitSet(numBits int) *BitSet {
 }
 
 // Size returns the number of bits the bitset holds
-func (bitset *BitSet) Size() int {
-	return bitset.size
+func (bs *BitSet) Size() int {
+	return bs.size
 }
 
 // Set sets the Nth bit to 1. Errors if n < 0 or n >= bitset.size
-func (bitset *BitSet) Set(n int) error {
-	if err := bitset.checkValidBit(n); err != nil {
+func (bs *BitSet) Set(n int) error {
+	if err := bs.checkValidBit(n); err != nil {
 		return err
 	}
-	bitset.set(n)
+	bs.set(n)
 	return nil
 }
 
 // SetBits sets multiple bits. This operation is atomic; if any bit is invalid,
 // the bitset will roll back to its original state before attempting to set any of the
 // bits.
-func (bitset *BitSet) SetBits(indices []int) error {
+func (bs *BitSet) SetBits(indices []int) error {
 	var originalBits []int8
 	for _, idx := range indices {
-		wasSet, err := bitset.Test(idx)
+		wasSet, err := bs.Test(idx)
 
 		// out of bounds: roll back by un-setting bits up to the invalid bit
 		if err != nil {
 			for j, ob := range originalBits {
 				// if the bit was 0 before being set, clear it back to 0
 				if ob == 0 {
-					bitset.clear(indices[j])
+					bs.clear(indices[j])
 				}
 			}
 			return err
@@ -60,36 +60,36 @@ func (bitset *BitSet) SetBits(indices []int) error {
 			originalBits = append(originalBits, 0)
 		}
 
-		bitset.set(idx)
+		bs.set(idx)
 	}
 
 	return nil
 }
 
 // Clear zeroes the Nth bit. Errors if n < 0 or n >= bitset.size
-func (bitset *BitSet) Clear(n int) error {
-	if err := bitset.checkValidBit(n); err != nil {
+func (bs *BitSet) Clear(n int) error {
+	if err := bs.checkValidBit(n); err != nil {
 		return err
 	}
-	bitset.clear(n)
+	bs.clear(n)
 	return nil
 }
 
 // ClearBits clears multiple bits. This operation is atomic; if any bit is invalid,
 // the bitset will roll back to its original state before attempting to clear any of the
 // bits.
-func (bitset *BitSet) ClearBits(indices []int) error {
+func (bs *BitSet) ClearBits(indices []int) error {
 	var originalBits []int8
 
 	for _, idx := range indices {
-		wasSet, err := bitset.Test(idx)
+		wasSet, err := bs.Test(idx)
 
 		// out of bounds: roll back by un-clearing bits up to invalid bit
 		if err != nil {
 			for j, ob := range originalBits {
 				// if the bit was 1 before being cleared, set it back to 1
 				if ob == 1 {
-					bitset.set(indices[j])
+					bs.set(indices[j])
 				}
 			}
 			return err
@@ -101,37 +101,37 @@ func (bitset *BitSet) ClearBits(indices []int) error {
 			originalBits = append(originalBits, 0)
 		}
 
-		bitset.clear(idx)
+		bs.clear(idx)
 	}
 
 	return nil
 }
 
 // ClearAll clears all bits.
-func (bitset *BitSet) ClearAll() {
-	bitset.words = make([]uint64, int(math.Ceil(float64(bitset.size)/64.0)))
+func (bs *BitSet) ClearAll() {
+	bs.words = make([]uint64, int(math.Ceil(float64(bs.size)/64.0)))
 }
 
 // Flip flips the Nth bit, i.e. 0 -> 1 or 1 -> 0. Errors if n < 0 or n >= bitset.size
-func (bitset *BitSet) Flip(n int) error {
-	if err := bitset.checkValidBit(n); err != nil {
+func (bs *BitSet) Flip(n int) error {
+	if err := bs.checkValidBit(n); err != nil {
 		return err
 	}
-	bitset.flip(n)
+	bs.flip(n)
 	return nil
 }
 
 // FlipBits flips multiple bits. This operation is atomic; if any bit is invalid,
 // the bitset will roll back to its original state before the attempt to flip the bits.
-func (bitset *BitSet) FlipBits(bits []int) error {
+func (bs *BitSet) FlipBits(bits []int) error {
 	for _, idx := range bits {
-		err := bitset.Flip(idx)
+		err := bs.Flip(idx)
 		if err != nil {
 			for _, i := range bits {
 				if i == idx {
 					return err
 				}
-				bitset.flip(i)
+				bs.flip(i)
 			}
 		}
 	}
@@ -139,19 +139,19 @@ func (bitset *BitSet) FlipBits(bits []int) error {
 }
 
 // Test checks if the Nth bit is set to 1. Errors if n < 0 or n >= bitset.size
-func (bitset *BitSet) Test(n int) (bool, error) {
-	if err := bitset.checkValidBit(n); err != nil {
+func (bs *BitSet) Test(n int) (bool, error) {
+	if err := bs.checkValidBit(n); err != nil {
 		return false, err
 	}
-	return bitset.test(n), nil
+	return bs.test(n), nil
 }
 
 // TestBits tests if multiple bits are set to 1. Returns a slice of bools that are true/false
 // if the corresponding bits are set and the number of set bits.
-func (bitset *BitSet) TestBits(bits []int) ([]bool, int, error) {
+func (bs *BitSet) TestBits(bits []int) ([]bool, int, error) {
 	res, numSet := make([]bool, len(bits)), 0
 	for i, bit := range bits {
-		isSet, err := bitset.Test(bit)
+		isSet, err := bs.Test(bit)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -164,46 +164,46 @@ func (bitset *BitSet) TestBits(bits []int) ([]bool, int, error) {
 }
 
 // CountSetBits returns the number of set bits.
-func (bitset *BitSet) CountSetBits() int {
+func (bs *BitSet) CountSetBits() int {
 	count := 0
-	for _, word := range bitset.words {
+	for _, word := range bs.words {
 		count += bits.OnesCount64(word)
 	}
 	return count
 }
 
 // Or sets the bits of the receiver to the result of the receiver OR (|) other.
-func (bitset *BitSet) Or(other *BitSet) {
-	bitsLeft := bitset.size
-	for i, j := 0, 0; i < len(bitset.words) && j < len(other.words); i, j = i+1, j+1 {
-		bitset.words[i] = mask(bitset.words[i]|other.words[j], bitsLeft%64)
+func (bs *BitSet) Or(other *BitSet) {
+	bitsLeft := bs.size
+	for i, j := 0, 0; i < len(bs.words) && j < len(other.words); i, j = i+1, j+1 {
+		bs.words[i] = mask(bs.words[i]|other.words[j], bitsLeft%64)
 		bitsLeft -= 64
 	}
 }
 
 // And sets the bits of the receiver to the result of the receiver AND (&) other.
-func (bitset *BitSet) And(other *BitSet) {
-	bitsLeft := bitset.size
-	for i, j := 0, 0; i < len(bitset.words) && j < len(other.words); i, j = i+1, j+1 {
-		bitset.words[i] = mask(bitset.words[i]&other.words[j], bitsLeft%64)
+func (bs *BitSet) And(other *BitSet) {
+	bitsLeft := bs.size
+	for i, j := 0, 0; i < len(bs.words) && j < len(other.words); i, j = i+1, j+1 {
+		bs.words[i] = mask(bs.words[i]&other.words[j], bitsLeft%64)
 		bitsLeft -= 64
 	}
 }
 
 // Xor sets the bits of the receiver to the result of the receiver AND (&) other.
-func (bitset *BitSet) Xor(other *BitSet) {
-	bitsLeft := bitset.size
-	for i, j := 0, 0; i < len(bitset.words) && j < len(other.words); i, j = i+1, j+1 {
-		bitset.words[i] = mask(bitset.words[i]^other.words[j], bitsLeft%64)
+func (bs *BitSet) Xor(other *BitSet) {
+	bitsLeft := bs.size
+	for i, j := 0, 0; i < len(bs.words) && j < len(other.words); i, j = i+1, j+1 {
+		bs.words[i] = mask(bs.words[i]^other.words[j], bitsLeft%64)
 		bitsLeft -= 64
 	}
 }
 
 // Not flips each bit of the bitset
-func (bitset *BitSet) Not() {
-	bitsLeft := bitset.size
-	for i := range bitset.words {
-		bitset.words[i] = mask(^bitset.words[i], bitsLeft%64)
+func (bs *BitSet) Not() {
+	bitsLeft := bs.size
+	for i := range bs.words {
+		bs.words[i] = mask(^bs.words[i], bitsLeft%64)
 		bitsLeft -= 64
 	}
 }
@@ -243,14 +243,14 @@ func Not(bs *BitSet) *BitSet {
 	return &BitSet{size: bs.size, words: newBitArray}
 }
 
-func (bitset *BitSet) String() string {
+func (bs *BitSet) String() string {
 	buffer := bytes.Buffer{}
-	for i := len(bitset.words) - 1; i >= 0; i-- {
-		word := bitset.words[i]
+	for i := len(bs.words) - 1; i >= 0; i-- {
+		word := bs.words[i]
 		if word == 0 {
 			continue
 		}
-		if i+1 < len(bitset.words) && bitset.words[i+1] != 0 {
+		if i+1 < len(bs.words) && bs.words[i+1] != 0 {
 			buffer.WriteString(fmt.Sprintf("%.64b", word))
 		} else {
 			buffer.WriteString(fmt.Sprintf("%b", word))
@@ -260,30 +260,30 @@ func (bitset *BitSet) String() string {
 }
 
 // set sets the Nth bit to 1.
-func (bitset *BitSet) set(n int) {
-	wordIdx, bitIdx := bitset.getWordAndPos(n)
-	bitset.words[wordIdx] |= 1 << bitIdx
+func (bs *BitSet) set(n int) {
+	wordIdx, bitIdx := bs.getWordAndPos(n)
+	bs.words[wordIdx] |= 1 << bitIdx
 }
 
 // clear zeroes the Nth bit.
-func (bitset *BitSet) clear(n int) {
-	wordIdx, bitIdx := bitset.getWordAndPos(n)
-	bitset.words[wordIdx] &= ^(1 << bitIdx)
+func (bs *BitSet) clear(n int) {
+	wordIdx, bitIdx := bs.getWordAndPos(n)
+	bs.words[wordIdx] &= ^(1 << bitIdx)
 }
 
 // flip flips the Nth bit, i.e. 0 -> 1 or 1 -> 0.
-func (bitset *BitSet) flip(n int) {
-	wordIdx, bitIdx := bitset.getWordAndPos(n)
-	bitset.words[wordIdx] ^= 1 << bitIdx
+func (bs *BitSet) flip(n int) {
+	wordIdx, bitIdx := bs.getWordAndPos(n)
+	bs.words[wordIdx] ^= 1 << bitIdx
 }
 
 // test checks if the Nth bit is set.
-func (bitset *BitSet) test(n int) bool {
-	wordIdx, bitIdx := bitset.getWordAndPos(n)
-	return bitset.words[wordIdx]&(1<<bitIdx) >= 1
+func (bs *BitSet) test(n int) bool {
+	wordIdx, bitIdx := bs.getWordAndPos(n)
+	return bs.words[wordIdx]&(1<<bitIdx) >= 1
 }
 
-func (bitset *BitSet) getWordAndPos(n int) (int, int) {
+func (bs *BitSet) getWordAndPos(n int) (int, int) {
 	return n / 64, n % 64
 }
 
@@ -296,12 +296,12 @@ func mask(word uint64, n int) uint64 {
 	return word & ((1 << n) - 1)
 }
 
-func (bitset *BitSet) checkValidBit(n int) error {
+func (bs *BitSet) checkValidBit(n int) error {
 	if n < 0 {
 		return fmt.Errorf("test: n must be >= 0")
 	}
-	if n >= bitset.size {
-		return fmt.Errorf("bit index %d out of range of bitset of size %d", n, bitset.size)
+	if n >= bs.size {
+		return fmt.Errorf("bit index %d out of range of bitset of size %d", n, bs.size)
 	}
 	return nil
 }
