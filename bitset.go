@@ -3,7 +3,6 @@ package bitset
 import (
 	"bytes"
 	"fmt"
-	"math"
 	"math/bits"
 )
 
@@ -109,7 +108,7 @@ func (bs *BitSet) ClearBits(indices []int) error {
 
 // ClearAll clears all bits.
 func (bs *BitSet) ClearAll() {
-	bs.words = make([]uint64, int(math.Ceil(float64(bs.size)/64.0)))
+	bs.words = make([]uint64, len(bs.words))
 }
 
 // Flip flips the Nth bit, i.e. 0 -> 1 or 1 -> 0. Errors if n < 0 or n >= bitset.size
