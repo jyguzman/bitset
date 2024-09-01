@@ -193,6 +193,20 @@ func And(bs1 *BitSet, bs2 *BitSet) *BitSet {
 	return &BitSet{size: largerSet.size, words: newBitArray}
 }
 
+// Xor returns the result of bitset XOR (^) other. The result's size will be equal to that of the
+// larger bitset.
+func Xor(bs1 *BitSet, bs2 *BitSet) *BitSet {
+	smallerSet, largerSet := bs1, bs2
+	if bs1.size > bs2.size {
+		smallerSet, largerSet = bs2, bs1
+	}
+	newBitArray := make([]uint64, len(largerSet.words))
+	for i := len(smallerSet.words) - 1; i >= 0; i-- {
+		newBitArray[i] = smallerSet.words[i] ^ largerSet.words[i]
+	}
+	return &BitSet{size: largerSet.size, words: newBitArray}
+}
+
 // Not returns a new bitset obtained from flipping each bit of the input bitset.
 func Not(bs *BitSet) *BitSet {
 	newBitArray := make([]uint64, len(bs.words))
