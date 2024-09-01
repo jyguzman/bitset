@@ -37,9 +37,7 @@ func (bs *BitSet) Set(n int) {
 	bs.set(n)
 }
 
-// SetBits sets multiple bits. This operation is atomic; if any bit is invalid,
-// the bitset will roll back to its original state before attempting to set any of the
-// bits.
+// SetBits sets the bits at the given indices.
 func (bs *BitSet) SetBits(indices []int) {
 	for _, idx := range indices {
 		bs.Set(idx)
@@ -52,9 +50,7 @@ func (bs *BitSet) Clear(n int) {
 	bs.clear(n)
 }
 
-// ClearBits clears multiple bits. This operation is atomic; if any bit is invalid,
-// the bitset will roll back to its original state before attempting to clear any of the
-// bits.
+// ClearBits zeroes the bits at the given indices.
 func (bs *BitSet) ClearBits(indices []int) {
 	for _, idx := range indices {
 		bs.clear(idx)
@@ -72,8 +68,7 @@ func (bs *BitSet) Flip(n int) {
 	bs.flip(n)
 }
 
-// FlipBits flips multiple bits. This operation is atomic; if any bit is invalid,
-// the bitset will roll back to its original state before the attempt to flip the bits.
+// FlipBits flips the bits at the given indices.
 func (bs *BitSet) FlipBits(bits []int) {
 	for _, idx := range bits {
 		bs.Flip(idx)
