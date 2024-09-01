@@ -10,7 +10,7 @@ import (
 
 func TestBitSet_BitArrayLenDivisibleBy64(t *testing.T) {
 	numBits := 512
-	bs := NewBitSet(numBits)
+	bs := NewBitSetInitialSize(numBits)
 	want := 8
 	if len(bs.words) != want {
 		t.Errorf("BitSet has length %d, want %d", len(bs.words), want)
@@ -19,12 +19,12 @@ func TestBitSet_BitArrayLenDivisibleBy64(t *testing.T) {
 
 func TestBitSet_BitArrayLenNotDivisibleBy64(t *testing.T) {
 	numBits := 512
-	bs := NewBitSet(numBits + 1)
+	bs := NewBitSetInitialSize(numBits + 1)
 	want := 9
 	if len(bs.words) != want {
 		t.Errorf("BitSet has length %d, want %d", len(bs.words), want)
 	}
-	bs = NewBitSet(numBits - 1)
+	bs = NewBitSetInitialSize(numBits - 1)
 	want = 8
 	if len(bs.words) != want {
 		t.Errorf("BitSet has length %d, want %d", len(bs.words), want)
@@ -36,30 +36,24 @@ func TestBitSet_Test(t *testing.T) {
 	// intializing bitset to binary representation of 2^63 + 1, so bits 0 and 63 should be set
 	bs := &BitSet{size: 64, words: words}
 
-	isSet, err := bs.Test(63)
+	isSet := bs.Test(63)
 	if !isSet {
 		t.Errorf("BitSet.Test(63) == false, want true")
 	}
 
-	isSet, err = bs.Test(0)
+	isSet = bs.Test(0)
 	if !isSet {
 		t.Errorf("BitSet.Test(0) == false, want true")
 	}
 
-	isSet, err = bs.Test(30)
+	isSet = bs.Test(30)
 	if isSet {
 		t.Errorf("BitSet.Test(30) == true, want false")
 	}
 
-	err = bs.Set(64)
-	if err == nil {
-		t.Errorf("BitSet Test(): should have returned out of bounds error")
-	}
+	bs.Set(64)
 
-	err = bs.Set(-1)
-	if err == nil {
-		t.Errorf("BitSet Test(): should have returned out of bounds error")
-	}
+	bs.Set(-1)
 }
 
 func TestBitSet_TestBits(t *testing.T) {
@@ -69,11 +63,7 @@ func TestBitSet_TestBits(t *testing.T) {
 
 	bitsToTest := []int{0, 15, 30, 45, 63}
 
-	bools, numSet, err := bs.TestBits(bitsToTest)
-
-	if err != nil {
-		t.Errorf("BitSet.TestBits() failed: %v", err)
-	}
+	bools, numSet := bs.TestBits(bitsToTest)
 
 	if numSet != 3 {
 		t.Errorf("BitSet.TestBits() want 3, got %d", numSet)
@@ -85,46 +75,36 @@ func TestBitSet_TestBits(t *testing.T) {
 }
 
 func TestBitSet_Set(t *testing.T) {
-	bs := NewBitSet(64)
+	bs := NewBitSetInitialSize(64)
 
-	err := bs.Set(64)
-	if err == nil {
-		t.Errorf("BitSet should have returned out of bounds error for invalid bit 64")
-	}
-	err = bs.Set(-1)
-	if err == nil {
-		t.Errorf("BitSet should have returned out of bounds error for invalid bit -1")
-	}
+	bs.Set(64)
+	bs.Set(-1)
 
-	err = bs.Set(0)
-	isSet, err := bs.Test(0)
+	bs.Set(0)
+	isSet := bs.Test(0)
 	if !isSet {
 		t.Errorf("BitSet.Test(0) == false, want true")
 	}
 
-	err = bs.Set(63)
-	isSet, err = bs.Test(63)
+	bs.Set(63)
+	isSet = bs.Test(63)
 	if !isSet {
 		t.Errorf("BitSet.Test(63) == false, want true")
 	}
 
-	err = bs.Set(0)
-	isSet, err = bs.Test(0)
+	bs.Set(0)
+	isSet = bs.Test(0)
 	if !isSet {
 		t.Errorf("BitSet.Test(0) on already set bit == false, want true")
 	}
 }
 
 func TestBitSet_SetBits(t *testing.T) {
-	bs := NewBitSet(64)
+	bs := NewBitSetInitialSize(64)
 	bitsToSet := []int{0, 63, 0, 5, 10}
-	if err := bs.SetBits(bitsToSet); err != nil {
-		t.Errorf("BitSet.SetBits() failed: %v", err)
-	}
-	bools, numSet, err := bs.TestBits(bitsToSet)
-	if err != nil {
-		t.Errorf("BitSet.TestBits() failed in Test_SetBits: %v", err)
-	}
+	bs.SetBits(bitsToSet)
+	bools, numSet := bs.TestBits(bitsToSet)
+
 	if numSet != len(bitsToSet) {
 		t.Errorf("BitSet.TestBits() want %d, got %d", len(bitsToSet), numSet)
 	}
@@ -138,35 +118,30 @@ func TestBitSet_Clear(t *testing.T) {
 	// intializing bitset to binary representation of 2^63 + 1, so bits 0 and 63 should be set
 	bs := &BitSet{size: 64, words: words}
 
-	err := bs.Clear(64)
-	if err == nil {
-		t.Errorf("BitSet should have returned out of bounds error for invalid bit 64")
-	}
-	err = bs.Clear(-1)
-	if err == nil {
-		t.Errorf("BitSet should have returned out of bounds error for invalid bit -1")
-	}
+	bs.Clear(64)
 
-	err = bs.Clear(0)
-	isSet, err := bs.Test(0)
+	bs.Clear(-1)
+
+	bs.Clear(0)
+	isSet := bs.Test(0)
 	if isSet {
 		t.Errorf("BitSet.Test(0) == true, want false")
 	}
 
-	err = bs.Clear(63)
-	isSet, err = bs.Test(63)
+	bs.Clear(63)
+	isSet = bs.Test(63)
 	if isSet {
 		t.Errorf("BitSet.Test(63) == true, want false")
 	}
 
-	err = bs.Clear(30)
-	isSet, err = bs.Test(30)
+	bs.Clear(30)
+	isSet = bs.Test(30)
 	if isSet {
 		t.Errorf("BitSet.Test(0) on zero bit == true, want false")
 	}
 
-	err = bs.Clear(0)
-	isSet, err = bs.Test(0)
+	bs.Clear(0)
+	isSet = bs.Test(0)
 	if isSet {
 		t.Errorf("BitSet.Test(0) on cleared bit == true, want false")
 	}
@@ -178,13 +153,9 @@ func TestBitSet_ClearBits(t *testing.T) {
 	bs := &BitSet{size: 64, words: words}
 
 	bitsToClear := []int{0, 15, 30, 45, 63}
-	if err := bs.ClearBits(bitsToClear); err != nil {
-		t.Errorf("BitSet.ClearBits() failed: %v", err)
-	}
-	bools, numSet, err := bs.TestBits(bitsToClear)
-	if err != nil {
-		t.Errorf("BitSet.TestBits() failed in Test_ClearBits: %v", err)
-	}
+	bs.ClearBits(bitsToClear)
+	bools, numSet := bs.TestBits(bitsToClear)
+
 	if numSet > 0 {
 		t.Errorf("BitSet.TestBits() want %d, got %d", 0, numSet)
 	}
@@ -198,41 +169,36 @@ func TestBitSet_Flip(t *testing.T) {
 	// intializing bitset to binary representation of 2^63 + 1, so bits 0 and 63 should be set
 	bs := &BitSet{size: 64, words: words}
 
-	err := bs.Flip(64)
-	if err == nil {
-		t.Errorf("BitSet.Flip() should have returned out of bounds error for invalid bit 64")
-	}
-	err = bs.Flip(-1)
-	if err == nil {
-		t.Errorf("BitSet.Flip() should have returned out of bounds error for invalid bit -1")
-	}
+	bs.Flip(64)
 
-	err = bs.Flip(0)
-	isSet, err := bs.Test(0)
+	bs.Flip(-1)
+
+	bs.Flip(0)
+	isSet := bs.Test(0)
 	if isSet {
 		t.Errorf("BitSet.Flip(0) on 1 bit should be 0, still have 1")
 	}
 
-	err = bs.Flip(0)
-	isSet, err = bs.Test(0)
+	bs.Flip(0)
+	isSet = bs.Test(0)
 	if !isSet {
 		t.Errorf("BitSet.Flip(0) on 0 bit should be 1, still have 0")
 	}
 
-	err = bs.Flip(63)
-	isSet, err = bs.Test(63)
+	bs.Flip(63)
+	isSet = bs.Test(63)
 	if isSet {
 		t.Errorf("BitSet.Flip(0) on 1 bit should be 0, still have 1")
 	}
 
-	err = bs.Flip(63)
-	isSet, err = bs.Test(63)
+	bs.Flip(63)
+	isSet = bs.Test(63)
 	if !isSet {
 		t.Errorf("BitSet.Flip(0) on 0 bit should be 1, still have 0")
 	}
 
-	err = bs.Flip(30)
-	isSet, err = bs.Test(30)
+	bs.Flip(30)
+	isSet = bs.Test(30)
 	if !isSet {
 		t.Errorf("BitSet.Test(0) on 0 should be 1, still have 0")
 	}
@@ -244,13 +210,9 @@ func TestBitSet_FlipBits(t *testing.T) {
 	bs := &BitSet{size: 64, words: words}
 
 	bitsToFlip := []int{0, 15, 30, 45, 63}
-	if err := bs.FlipBits(bitsToFlip); err != nil {
-		t.Errorf("BitSet.ClearBits() failed: %v", err)
-	}
-	bools, numSet, err := bs.TestBits(bitsToFlip)
-	if err != nil {
-		t.Errorf("BitSet.TestBits() failed in Test_ClearBits: %v", err)
-	}
+	bs.FlipBits(bitsToFlip)
+	bools, numSet := bs.TestBits(bitsToFlip)
+
 	if numSet != 2 {
 		t.Errorf("BitSet.TestBits() want %d, got %d", 2, numSet)
 	}
@@ -260,33 +222,25 @@ func TestBitSet_FlipBits(t *testing.T) {
 }
 
 func TestBitSet_Or_EqualLength(t *testing.T) {
-	a := NewBitSet(10)
-	b := NewBitSet(90)
+	a := NewBitSetInitialSize(10)
+	b := NewBitSetInitialSize(90)
 
 	aToSet := []int{1}
 	bToSet := []int{0, 2, 4, 6, 45}
-	if err := a.SetBits(aToSet); err != nil {
-		t.Error(err)
-	}
-	if err := b.SetBits(bToSet); err != nil {
-		t.Error(err)
-	}
+	a.SetBits(aToSet)
+	b.SetBits(bToSet)
 	a.Or(b)
 	fmt.Println(a)
 }
 
 func TestBitSet_Or_SmallerReceiver(t *testing.T) {
-	a := NewBitSet(80)
-	b := NewBitSet(200)
+	a := NewBitSetInitialSize(80)
+	b := NewBitSetInitialSize(200)
 
 	aToSet := []int{1}
 	bToSet := []int{0, 2, 4, 6, 64}
-	if err := a.SetBits(aToSet); err != nil {
-		t.Error(err)
-	}
-	if err := b.SetBits(bToSet); err != nil {
-		t.Error(err)
-	}
+	a.SetBits(aToSet)
+	b.SetBits(bToSet)
 	str := b.String()
 	fmt.Println("b:", str, len(str), b.words)
 	//fmt.Println("a:", a, len(a.String()), "b:", b, len(b.String()), b.words)
@@ -295,34 +249,26 @@ func TestBitSet_Or_SmallerReceiver(t *testing.T) {
 }
 
 func TestBitSet_Or_LargerReceiver(t *testing.T) {
-	a := NewBitSet(10)
-	b := NewBitSet(20)
+	a := NewBitSetInitialSize(10)
+	b := NewBitSetInitialSize(20)
 
 	aToSet := []int{1}
 	bToSet := []int{0, 2, 4, 6, 18}
-	if err := a.SetBits(aToSet); err != nil {
-		t.Error(err)
-	}
-	if err := b.SetBits(bToSet); err != nil {
-		t.Error(err)
-	}
+	a.SetBits(aToSet)
+	b.SetBits(bToSet)
 	fmt.Println("a:", a, "b:", b)
 	a.Or(b)
 	fmt.Println(a)
 }
 
 func TestBitSet_And_LargerReceiver(t *testing.T) {
-	a := NewBitSet(80)
-	b := NewBitSet(156)
+	a := NewBitSetInitialSize(80)
+	b := NewBitSetInitialSize(156)
 
 	aToSet := []int{1, 5, 10, 15, 17, 29}
 	bToSet := []int{1, 29, 150}
-	if err := a.SetBits(aToSet); err != nil {
-		t.Error(err)
-	}
-	if err := b.SetBits(bToSet); err != nil {
-		t.Error(err)
-	}
+	a.SetBits(aToSet)
+	b.SetBits(bToSet)
 	str := b.String()
 	fmt.Println("b:", str, len(str), b.words)
 	a.And(b)
@@ -332,17 +278,13 @@ func TestBitSet_And_LargerReceiver(t *testing.T) {
 }
 
 func TestBitSet_And_Smaller(t *testing.T) {
-	a := NewBitSet(20)
-	b := NewBitSet(64)
+	a := NewBitSetInitialSize(20)
+	b := NewBitSetInitialSize(64)
 
 	aToSet := []int{1, 5, 10, 15, 17}
 	bToSet := []int{1, 5, 10, 15, 17}
-	if err := a.SetBits(aToSet); err != nil {
-		t.Error(err)
-	}
-	if err := b.SetBits(bToSet); err != nil {
-		t.Error(err)
-	}
+	a.SetBits(aToSet)
+	b.SetBits(bToSet)
 	fmt.Println("b arr:", b.words)
 	fmt.Println("a:", a, "b: ", b)
 	a.And(b)
@@ -352,27 +294,23 @@ func TestBitSet_And_Smaller(t *testing.T) {
 }
 
 func TestBitSet_Xor_Smaller(t *testing.T) {
-	a := NewBitSet(20)
-	b := NewBitSet(64)
+	a := NewBitSetInitialSize(20)
+	b := NewBitSetInitialSize(64)
 
 	a.Not()
 	b.Not()
 	aToClear := []int{1, 5, 10, 15, 17}
-	if err := a.ClearBits(aToClear); err != nil {
-		t.Error(err)
-	}
+	a.ClearBits(aToClear)
 	fmt.Println(a, b)
 	a.Xor(b)
 	fmt.Println(a)
 }
 
 func TestBitSet_Not(t *testing.T) {
-	a := NewBitSet(20)
+	a := NewBitSetInitialSize(20)
 
 	aToSet := []int{1, 5, 10, 15, 17}
-	if err := a.SetBits(aToSet); err != nil {
-		t.Error(err)
-	}
+	a.SetBits(aToSet)
 	fmt.Println(a)
 	a.Not()
 	fmt.Println(a)
@@ -386,10 +324,8 @@ func TestBitSet_String(t *testing.T) {
 		bit := rand.Intn(numBits)
 		setBits[bit], bits[i] = true, bit
 	}
-	bs := NewBitSet(numBits)
-	if err := bs.SetBits(bits); err != nil {
-		t.Error(err)
-	}
+	bs := NewBitSetInitialSize(numBits)
+	bs.SetBits(bits)
 	str := bs.String()
 	fmt.Println()
 	for i := len(str) - 1; i >= 0; i-- {
@@ -404,22 +340,20 @@ func TestBitSet_String(t *testing.T) {
 }
 
 func TestBitSet_Count(t *testing.T) {
-	bs := NewBitSet(0)
+	bs := NewBitSetInitialSize(0)
 	count, want := bs.CountSetBits(), 0
 	if count != want {
 		t.Errorf("BitSet.CountSetBits() with empty bitset: got %d, want %d", count, want)
 	}
 	numBits := 512
-	bs, setBits := NewBitSet(numBits), make(map[uint64]bool)
+	bs, setBits := NewBitSetInitialSize(numBits), make(map[uint64]bool)
 	numBitsToSet := rand.Intn(numBits)
 	bits := make([]int, numBitsToSet)
 	for i := 0; i < numBitsToSet; i++ {
 		bit := rand.Intn(numBits)
 		setBits[uint64(bit)], bits[i] = true, bit
 	}
-	if err := bs.SetBits(bits); err != nil {
-		t.Error(err)
-	}
+	bs.SetBits(bits)
 	count, want = bs.CountSetBits(), len(setBits)
 	if count != want {
 		t.Errorf("BitSet has count %d, want %d", count, want)
