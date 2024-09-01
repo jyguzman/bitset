@@ -276,7 +276,7 @@ func TestBitSet_Or_EqualLength(t *testing.T) {
 }
 
 func TestBitSet_Or_SmallerReceiver(t *testing.T) {
-	a := NewBitSet(50)
+	a := NewBitSet(80)
 	b := NewBitSet(200)
 
 	aToSet := []int{1}
@@ -295,14 +295,14 @@ func TestBitSet_Or_SmallerReceiver(t *testing.T) {
 }
 
 func TestBitSet_Or_LargerReceiver(t *testing.T) {
-	a := NewBitSet(100)
+	a := NewBitSet(10)
 	b := NewBitSet(20)
 
-	//aToSet := []int{1}
-	bToSet := []int{0, 2, 4, 6}
-	//if err := a.SetBits(aToSet); err != nil {
-	//	t.Error(err)
-	//}
+	aToSet := []int{1}
+	bToSet := []int{0, 2, 4, 6, 18}
+	if err := a.SetBits(aToSet); err != nil {
+		t.Error(err)
+	}
 	if err := b.SetBits(bToSet); err != nil {
 		t.Error(err)
 	}
@@ -312,18 +312,19 @@ func TestBitSet_Or_LargerReceiver(t *testing.T) {
 }
 
 func TestBitSet_And_LargerReceiver(t *testing.T) {
-	a := NewBitSet(30)
-	b := NewBitSet(200)
+	a := NewBitSet(80)
+	b := NewBitSet(156)
 
 	aToSet := []int{1, 5, 10, 15, 17, 29}
-	bToSet := []int{29, 150}
+	bToSet := []int{1, 29, 150}
 	if err := a.SetBits(aToSet); err != nil {
 		t.Error(err)
 	}
 	if err := b.SetBits(bToSet); err != nil {
 		t.Error(err)
 	}
-	fmt.Println("a:", a, "b: ", b)
+	str := b.String()
+	fmt.Println("b:", str, len(str), b.words)
 	a.And(b)
 	//res := And(a, b)
 	fmt.Println(a)

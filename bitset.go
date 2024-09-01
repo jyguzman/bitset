@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/bits"
+	"strings"
 )
 
 type BitSet struct {
@@ -11,7 +12,7 @@ type BitSet struct {
 	words []uint64
 }
 
-// NewBitSet initializes and returns a BitSet holding the given number of bits
+// NewBitSet initializes and returns a BitSet holding the given number of bits.
 func NewBitSet(numBits int) *BitSet {
 	numWords := 1 + int(float64(numBits)/64.0)
 	return &BitSet{
@@ -25,7 +26,7 @@ func (bs *BitSet) Size() int {
 	return bs.size
 }
 
-// Set sets the Nth bit to 1. Errors if n < 0 or n >= bitset.size
+// Set sets the Nth bit to 1. Errors if n < 0 or n >= bitset.size.
 func (bs *BitSet) Set(n int) error {
 	if err := bs.checkValidBit(n); err != nil {
 		return err
@@ -175,7 +176,7 @@ func (bs *BitSet) CountSetBits() int {
 func (bs *BitSet) Or(other *BitSet) {
 	bitsLeft := bs.size
 	for i, j := 0, 0; i < len(bs.words) && j < len(other.words); i, j = i+1, j+1 {
-		bs.words[i] = mask(bs.words[i]|other.words[j], bitsLeft%64)
+		bs.words[i] = mask(bs.words[i]|other.words[j], bitsLeft)
 		bitsLeft -= 64
 	}
 }
@@ -184,7 +185,7 @@ func (bs *BitSet) Or(other *BitSet) {
 func (bs *BitSet) And(other *BitSet) {
 	bitsLeft := bs.size
 	for i, j := 0, 0; i < len(bs.words) && j < len(other.words); i, j = i+1, j+1 {
-		bs.words[i] = mask(bs.words[i]&other.words[j], bitsLeft%64)
+		bs.words[i] = mask(bs.words[i]&other.words[j], bitsLeft)
 		bitsLeft -= 64
 	}
 }
@@ -193,7 +194,7 @@ func (bs *BitSet) And(other *BitSet) {
 func (bs *BitSet) Xor(other *BitSet) {
 	bitsLeft := bs.size
 	for i, j := 0, 0; i < len(bs.words) && j < len(other.words); i, j = i+1, j+1 {
-		bs.words[i] = mask(bs.words[i]^other.words[j], bitsLeft%64)
+		bs.words[i] = mask(bs.words[i]^other.words[j], bitsLeft)
 		bitsLeft -= 64
 	}
 }
@@ -207,7 +208,28 @@ func (bs *BitSet) Not() {
 	}
 }
 
-// Or returns the result of bitset OR (|) other.
+// Any returns true if at least one bit is set
+func (bs *BitSet) Any() bool {
+	for _, word := range bs.words {
+		if word != 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// None returns true no bits are set
+func (bs *BitSet) None() bool {
+	for _, word := range bs.words {
+		if word != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// Or returns the result of bitset OR (|) other. The result's size will be equal to that of the
+// larger bitset.
 func Or(bs1 *BitSet, bs2 *BitSet) *BitSet {
 	smallerSet, largerSet := bs1, bs2
 	if bs1.size > bs2.size {
@@ -220,7 +242,8 @@ func Or(bs1 *BitSet, bs2 *BitSet) *BitSet {
 	return &BitSet{size: largerSet.size, words: newBitArray}
 }
 
-// And returns the result of bitset AND (&) other
+// And returns the result of bitset AND (&) other. The result's size will be equal to that of the
+// larger bitset.
 func And(bs1 *BitSet, bs2 *BitSet) *BitSet {
 	smallerSet, largerSet := bs1, bs2
 	if bs1.size > bs2.size {
@@ -233,7 +256,7 @@ func And(bs1 *BitSet, bs2 *BitSet) *BitSet {
 	return &BitSet{size: largerSet.size, words: newBitArray}
 }
 
-// Not returns a new bitset obtained from flipping each bit of the input bitset
+// Not returns a new bitset obtained from flipping each bit of the input bitset.
 func Not(bs *BitSet) *BitSet {
 	newBitArray := make([]uint64, len(bs.words))
 	for i := range bs.words {
@@ -242,20 +265,13 @@ func Not(bs *BitSet) *BitSet {
 	return &BitSet{size: bs.size, words: newBitArray}
 }
 
+// Strings returns the representation of the bitset as a binary string.
 func (bs *BitSet) String() string {
 	buffer := bytes.Buffer{}
 	for i := len(bs.words) - 1; i >= 0; i-- {
-		word := bs.words[i]
-		if word == 0 {
-			continue
-		}
-		if i+1 < len(bs.words) && bs.words[i+1] != 0 {
-			buffer.WriteString(fmt.Sprintf("%.64b", word))
-		} else {
-			buffer.WriteString(fmt.Sprintf("%b", word))
-		}
+		buffer.WriteString(fmt.Sprintf("%.64b", bs.words[i]))
 	}
-	return buffer.String()
+	return strings.TrimLeft(buffer.String(), "0")
 }
 
 // set sets the Nth bit to 1.
@@ -297,9 +313,9 @@ func (bs *BitSet) checkValidBit(n int) error {
 }
 
 // mask retains the first n bits of a word and zeroes out the rest, returning the result.
-// If n == 0 the original word is returned
+// If n is invalid the original word is returned.
 func mask(word uint64, n int) uint64 {
-	if n == 0 {
+	if n <= 0 || n >= 64 {
 		return word
 	}
 	return word & ((1 << n) - 1)
