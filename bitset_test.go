@@ -10,7 +10,7 @@ import (
 
 func TestBitSet_BitArrayLenDivisibleBy64(t *testing.T) {
 	numBits := 512
-	bs := NewBitSetInitialSize(numBits)
+	bs := NewBitSetWithInitialSize(numBits)
 	want := 8
 	if len(bs.words) != want {
 		t.Errorf("BitSet has length %d, want %d", len(bs.words), want)
@@ -19,12 +19,12 @@ func TestBitSet_BitArrayLenDivisibleBy64(t *testing.T) {
 
 func TestBitSet_BitArrayLenNotDivisibleBy64(t *testing.T) {
 	numBits := 512
-	bs := NewBitSetInitialSize(numBits + 1)
+	bs := NewBitSetWithInitialSize(numBits + 1)
 	want := 9
 	if len(bs.words) != want {
 		t.Errorf("BitSet has length %d, want %d", len(bs.words), want)
 	}
-	bs = NewBitSetInitialSize(numBits - 1)
+	bs = NewBitSetWithInitialSize(numBits - 1)
 	want = 8
 	if len(bs.words) != want {
 		t.Errorf("BitSet has length %d, want %d", len(bs.words), want)
@@ -75,7 +75,7 @@ func TestBitSet_TestBits(t *testing.T) {
 }
 
 func TestBitSet_Set(t *testing.T) {
-	bs := NewBitSetInitialSize(64)
+	bs := NewBitSetWithInitialSize(64)
 
 	bs.Set(64)
 	bs.Set(-1)
@@ -100,7 +100,7 @@ func TestBitSet_Set(t *testing.T) {
 }
 
 func TestBitSet_SetBits(t *testing.T) {
-	bs := NewBitSetInitialSize(64)
+	bs := NewBitSetWithInitialSize(64)
 	bitsToSet := []int{0, 63, 0, 5, 10}
 	bs.SetBits(bitsToSet)
 	bools, numSet := bs.TestBits(bitsToSet)
@@ -222,8 +222,8 @@ func TestBitSet_FlipBits(t *testing.T) {
 }
 
 func TestBitSet_Or_EqualLength(t *testing.T) {
-	a := NewBitSetInitialSize(10)
-	b := NewBitSetInitialSize(90)
+	a := NewBitSetWithInitialSize(10)
+	b := NewBitSetWithInitialSize(90)
 
 	aToSet := []int{1}
 	bToSet := []int{0, 2, 4, 6, 45}
@@ -234,8 +234,8 @@ func TestBitSet_Or_EqualLength(t *testing.T) {
 }
 
 func TestBitSet_Or_SmallerReceiver(t *testing.T) {
-	a := NewBitSetInitialSize(80)
-	b := NewBitSetInitialSize(200)
+	a := NewBitSetWithInitialSize(80)
+	b := NewBitSetWithInitialSize(200)
 
 	aToSet := []int{1}
 	bToSet := []int{0, 2, 4, 6, 64}
@@ -249,8 +249,8 @@ func TestBitSet_Or_SmallerReceiver(t *testing.T) {
 }
 
 func TestBitSet_Or_LargerReceiver(t *testing.T) {
-	a := NewBitSetInitialSize(10)
-	b := NewBitSetInitialSize(20)
+	a := NewBitSetWithInitialSize(10)
+	b := NewBitSetWithInitialSize(20)
 
 	aToSet := []int{1}
 	bToSet := []int{0, 2, 4, 6, 18}
@@ -262,8 +262,8 @@ func TestBitSet_Or_LargerReceiver(t *testing.T) {
 }
 
 func TestBitSet_And_LargerReceiver(t *testing.T) {
-	a := NewBitSetInitialSize(80)
-	b := NewBitSetInitialSize(156)
+	a := NewBitSetWithInitialSize(80)
+	b := NewBitSetWithInitialSize(156)
 
 	aToSet := []int{1, 5, 10, 15, 17, 29}
 	bToSet := []int{1, 29, 150}
@@ -278,8 +278,8 @@ func TestBitSet_And_LargerReceiver(t *testing.T) {
 }
 
 func TestBitSet_And_Smaller(t *testing.T) {
-	a := NewBitSetInitialSize(20)
-	b := NewBitSetInitialSize(64)
+	a := NewBitSetWithInitialSize(20)
+	b := NewBitSetWithInitialSize(64)
 
 	aToSet := []int{1, 5, 10, 15, 17}
 	bToSet := []int{1, 5, 10, 15, 17}
@@ -294,8 +294,8 @@ func TestBitSet_And_Smaller(t *testing.T) {
 }
 
 func TestBitSet_Xor_Smaller(t *testing.T) {
-	a := NewBitSetInitialSize(20)
-	b := NewBitSetInitialSize(64)
+	a := NewBitSetWithInitialSize(20)
+	b := NewBitSetWithInitialSize(64)
 
 	a.Not()
 	b.Not()
@@ -307,7 +307,7 @@ func TestBitSet_Xor_Smaller(t *testing.T) {
 }
 
 func TestBitSet_Not(t *testing.T) {
-	a := NewBitSetInitialSize(20)
+	a := NewBitSetWithInitialSize(20)
 
 	aToSet := []int{1, 5, 10, 15, 17}
 	a.SetBits(aToSet)
@@ -324,7 +324,7 @@ func TestBitSet_String(t *testing.T) {
 		bit := rand.Intn(numBits)
 		setBits[bit], bits[i] = true, bit
 	}
-	bs := NewBitSetInitialSize(numBits)
+	bs := NewBitSetWithInitialSize(numBits)
 	bs.SetBits(bits)
 	str := bs.String()
 	fmt.Println()
@@ -340,13 +340,13 @@ func TestBitSet_String(t *testing.T) {
 }
 
 func TestBitSet_Count(t *testing.T) {
-	bs := NewBitSetInitialSize(0)
+	bs := NewBitSetWithInitialSize(0)
 	count, want := bs.CountSetBits(), 0
 	if count != want {
 		t.Errorf("BitSet.CountSetBits() with empty bitset: got %d, want %d", count, want)
 	}
 	numBits := 512
-	bs, setBits := NewBitSetInitialSize(numBits), make(map[uint64]bool)
+	bs, setBits := NewBitSetWithInitialSize(numBits), make(map[uint64]bool)
 	numBitsToSet := rand.Intn(numBits)
 	bits := make([]int, numBitsToSet)
 	for i := 0; i < numBitsToSet; i++ {

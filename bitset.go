@@ -236,7 +236,9 @@ func (bs *BitSet) getWordAndPos(n int) (int, int) {
 func (bs *BitSet) resize(newSize int) {
 	if newSize >= bs.size {
 		bs.size = newSize
-		bs.words = append(bs.words, make([]uint64, len(bs.words))...)
+		numWords := 1 + int(float64(newSize)/64.0)
+		newNewWords := numWords - len(bs.words)
+		bs.words = append(bs.words, make([]uint64, 2*newNewWords)...)
 	}
 }
 
